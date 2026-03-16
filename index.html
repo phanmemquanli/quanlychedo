@@ -35,7 +35,8 @@
       }
     };
 
-    ['CD_getSubFolders', 'CD_uploadMultipleFilesToDrive', 'CD_uploadFolderEvidence', 'CD_deleteEvidence', 'CD_doBatchUpdate', 'CD_searchLuong', 'CD_searchThamNien', 'CD_getUserContext', 'CD_hasDrivePermission'].forEach(func => {
+    // Bổ sung thêm hàm 'CD_updateRecord' vào danh sách kết nối
+    ['CD_getSubFolders', 'CD_uploadMultipleFilesToDrive', 'CD_uploadFolderEvidence', 'CD_deleteEvidence', 'CD_doBatchUpdate', 'CD_updateRecord', 'CD_searchLuong', 'CD_searchThamNien', 'CD_getUserContext', 'CD_hasDrivePermission'].forEach(func => {
       google.script.run[func] = function(...args) { this._callServer(func, args); };
     });
   </script>
@@ -203,16 +204,21 @@
         <select id="u_comboLoai" class="form-input" onchange="renderInputTableStructure()"><option value="LUONG">Lương</option><option value="THAMNIEN">Thâm niên</option></select>
       </div>
       <div>
-        <button class="btn btn-success" onclick="addRow()">+ Thêm dòng</button>
+        <button id="btn_addRow" class="btn btn-success" onclick="addRow()">+ Thêm dòng</button>
         <button class="btn btn-primary" onclick="saveAll()">💾 Lưu tất cả</button>
         <span id="updateStatus" class="status-msg"></span>
       </div>
     </div>
-    <div class="table-responsive"><table id="inputTable"><thead id="u_thead"></thead><tbody id="u_tbody"></tbody></table></div>
+    <div class="table-responsive">
+      <input type="hidden" id="EDIT_ROW_INDEX">
+      <table id="inputTable"><thead id="u_thead"></thead><tbody id="u_tbody"></tbody></table>
+    </div>
   </div>
 </div>
 
 <script>
+  window.CD_CAN_EDIT = false; // Biến lưu quyền chỉnh sửa
+
   /* --- KẾT NỐI: TẢI GIAO DIỆN MINH CHỨNG --- */
   window.onload = function() {
     document.getElementById('pageLoading').style.display = 'flex';
@@ -290,9 +296,15 @@
     else if (v.length >= 3) input.value = v.substring(0, 2) + '/' + v.substring(2);
     else input.value = v;
   }
+  
   function switchTab(t) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-search').classList.add('hidden'); document.getElementById('tab-update').classList.add('hidden');
+    
+    // Đặt lại trạng thái nếu đang chuyển tab
+    document.getElementById('EDIT_ROW_INDEX').value = "";
+    document.getElementById('btn_addRow').style.display = 'inline-flex';
+
     if (t === 'search') {
       document.getElementById('btnTabSearch').classList.add('active'); document.getElementById('tab-search').classList.remove('hidden');
     } else {
@@ -300,12 +312,14 @@
       renderInputTableStructure(); if(typeof loadFolders === 'function') loadFolders();
     }
   }
+
   function renderInputTableStructure() {
     const type = document.getElementById('u_comboLoai').value; const cols = CONFIG[type];
     const thead = document.getElementById('u_thead'); const tbody = document.getElementById('u_tbody');
     let hHtml = '<tr><th style="width:30px">#</th>'; cols.forEach(c => hHtml += `<th>${c.name}</th>`); hHtml += '</tr>';
     thead.innerHTML = hHtml; tbody.innerHTML = ''; addRow();
   }
+
   function addRow() {
     const type = document.getElementById('u_comboLoai').value; const cols = CONFIG[type]; const tbody = document.getElementById('u_tbody');
     const tr = document.createElement('tr'); tr.className = 'data-row'; let html = '<td class="stt-cell"></td>';
@@ -324,31 +338,66 @@
     });
     tr.innerHTML = html; tbody.appendChild(tr); updateSTT();
   }
+
   function removeRow(btn) { 
       const tbody = document.getElementById('u_tbody');
       if (tbody.rows.length > 1) { btn.closest('tr').remove(); updateSTT(); } else showNotify("Cần giữ lại ít nhất 1 dòng để nhập liệu.");
   }
   function updateSTT() { document.querySelectorAll('.stt-cell').forEach((td, i) => td.innerText = i + 1); }
+
   function initSearchTable() {
-    const loai = document.getElementById('s_comboLoai').value; const thead = document.getElementById('s_thead'); let h = '<tr><th>STT</th>';
+    const loai = document.getElementById('s_comboLoai').value; 
+    const thead = document.getElementById('s_thead'); 
+    let h = '<tr>';
+    if (window.CD_CAN_EDIT) h += '<th>Sửa</th>'; // Hiện cột Sửa nếu có quyền
+    h += '<th>STT</th>';
+    
     if (loai === 'LUONG') { h += `<th class="text-left">Họ tên</th><th>Mã</th><th>Bậc</th><th>Hệ số</th><th>Ngày Hưởng</th><th>Bậc Nâng</th><th>HS Nâng</th><th>Ngày Nâng</th><th>Số Quyết định</th><th>Ngày CT</th></tr>`; } 
     else { h += `<th class="text-left">Họ tên</th><th>TL% hiện hưởng</th><th>Ngày Hưởng</th><th>TL% Nâng</th><th>Ngày Nâng</th><th>Số Quyết định</th></tr>`; }
     thead.innerHTML = h; document.getElementById('s_tbody').innerHTML = '<tr><td colspan="15" style="color:#666; padding:15px;">...</td></tr>';
   }
+
   function doSearch() {
     const loai = document.getElementById('s_comboLoai').value;
     const boLoc = { text8: document.getElementById('s_hoten').value, text2: document.getElementById('s_thang').value, text3: document.getElementById('s_nam').value };
     const tbody = document.getElementById('s_tbody'); tbody.innerHTML = '<tr><td colspan="15">⏳ Đang tải...</td></tr>';
+    
     google.script.run.withSuccessHandler(rows => {
       if(!rows || rows.length === 0) { tbody.innerHTML = '<tr><td colspan="15">Không có dữ liệu phù hợp.</td></tr>'; return; }
       let h = '';
       rows.forEach((r, i) => {
-        const qdObj = loai === 'LUONG' ? r[14] : r[11]; let linkDisplay = ""; let qdText = "";
+        const qdObj = loai === 'LUONG' ? r[14] : r[11]; 
+        let linkDisplay = ""; 
+        let qdText = "";
+        
+        // Render Tên QĐ và Link QĐ theo chuẩn mảng (Chia nhiều link QĐ1, QĐ2...)
         if (typeof qdObj === 'object' && qdObj !== null) {
             qdText = qdObj.text || "";
-            if (qdObj.link) linkDisplay = `<a href="${qdObj.link}" target="_blank" style="color:blue; text-decoration:underline;">${qdText}</a>`; else linkDisplay = qdText;
-        } else { linkDisplay = qdObj || ""; }
-        h += `<tr><td>${i+1}</td>`;
+            let linkStr = qdObj.link || "";
+            if (linkStr && linkStr.includes(',')) {
+                let links = linkStr.split(',');
+                linkDisplay = `<div style="display:flex; flex-wrap:wrap; gap:3px; justify-content:center;">` + 
+                    links.map((l, idx) => `<a href="${l.trim()}" target="_blank" style="text-decoration:none; background:#e0f2fe; border:1px solid #bae6fd; padding:2px 5px; border-radius:3px; font-size:12px; font-weight:bold; color:#0369a1;" title="Xem QĐ ${idx+1}">QĐ${idx+1}</a>`).join('') + `</div>`;
+            } else if (linkStr) {
+                linkDisplay = `<a href="${linkStr}" target="_blank" style="text-decoration:none; background:#e0f2fe; border:1px solid #bae6fd; padding:2px 5px; border-radius:3px; font-size:12px; font-weight:bold; color:#0369a1;" title="${qdText}">QĐ 1</a>`;
+            } else { linkDisplay = qdText; }
+        } else { 
+            let str = String(qdObj || "");
+            if(str.includes('http')) {
+                 let links = str.split(',').filter(l => l.includes('http'));
+                 linkDisplay = `<div style="display:flex; flex-wrap:wrap; gap:3px; justify-content:center;">` + 
+                    links.map((l, idx) => `<a href="${l.trim()}" target="_blank" style="text-decoration:none; background:#e0f2fe; border:1px solid #bae6fd; padding:2px 5px; border-radius:3px; font-size:12px; font-weight:bold; color:#0369a1;" title="Xem QĐ ${idx+1}">QĐ${idx+1}</a>`).join('') + `</div>`;
+            } else { linkDisplay = str; }
+        }
+
+        // Hiện nút Edit nếu có quyền
+        let htmlSua = "";
+        if (window.CD_CAN_EDIT) {
+             const rowDataEncoded = encodeURIComponent(JSON.stringify(r));
+             htmlSua = `<td><button onclick="transferToEdit('${rowDataEncoded}', '${loai}')" style="border:1px solid #94a3b8; background:#fff; cursor:pointer; padding:3px 8px; border-radius:4px; color:#1e3a8a; font-weight:bold;" title="Sửa dòng này">📝</button></td>`;
+        }
+
+        h += `<tr>${htmlSua}<td>${i+1}</td>`;
         if (loai === 'LUONG') {
           h += `<td class="text-left"><b>${r[1]}</b></td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${formatD(r[5],r[6],r[7])}</td>
                 <td>${r[9]}</td><td>${r[10]}</td><td>${formatD(r[11],r[12],r[13])}</td><td>${linkDisplay}</td><td>${r[15] ? formatvnDate(r[15]) : ""}</td></tr>`;
@@ -361,6 +410,56 @@
     }).withFailureHandler(e => { tbody.innerHTML=`<tr><td colspan="15" class="text-error">Lỗi: ${e.message}</td></tr>`; })
     [loai === 'LUONG' ? 'CD_searchLuong' : 'CD_searchThamNien'](boLoc); 
   }
+
+  // --- CHUYỂN DỮ LIỆU SANG TAB CẬP NHẬT ĐỂ SỬA ---
+  function transferToEdit(dataEncoded, loai) {
+      const r = JSON.parse(decodeURIComponent(dataEncoded));
+      document.getElementById('u_comboLoai').value = loai;
+      renderInputTableStructure();
+      
+      // Chuyển Tab
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-search').classList.add('hidden'); 
+      document.getElementById('tab-update').classList.add('hidden');
+      document.getElementById('btnTabUpdate').classList.add('active'); 
+      document.getElementById('tab-update').classList.remove('hidden');
+
+      // Ẩn nút Thêm dòng và gắn cờ RowIndex
+      const rowIndex = loai === 'LUONG' ? r[16] : r[12];
+      document.getElementById('EDIT_ROW_INDEX').value = rowIndex; 
+      document.getElementById('btn_addRow').style.display = 'none';
+
+      // Điền dữ liệu vào input
+      const tr = document.querySelector('#u_tbody .data-row');
+      const inputs = tr.querySelectorAll('input');
+      
+      inputs.forEach(inp => {
+          const k = inp.getAttribute('data-key');
+          if (loai === 'LUONG') {
+              if(k==='hoten') inp.value = r[1]; if(k==='mangach') inp.value = r[2]; if(k==='bachh') inp.value = r[3];
+              if(k==='hshh') inp.value = r[4]; if(k==='ngayhh') inp.value = formatD(r[5],r[6],r[7]);
+              if(k==='bacn') inp.value = r[9]; if(k==='hsn') inp.value = r[10]; if(k==='ngayn') inp.value = formatD(r[11],r[12],r[13]);
+              if(k==='soqd') inp.value = r[14].text || ""; if(k==='soqdLink') inp.value = r[14].link || ""; if(k==='soqdText') inp.value = r[14].text || "";
+              if(k==='ngayct') inp.value = r[15] ? formatvnDate(r[15]) : "";
+          } else {
+              if(k==='hoten') inp.value = r[1]; if(k==='tlhh') inp.value = r[2]; if(k==='ngayhh') inp.value = formatD(r[3],r[4],r[5]);
+              if(k==='tln') inp.value = r[7]; if(k==='ngayn') inp.value = formatD(r[8],r[9],r[10]);
+              if(k==='soqd') inp.value = r[11].text || ""; if(k==='soqdLink') inp.value = r[11].link || ""; if(k==='soqdText') inp.value = r[11].text || "";
+          }
+          // Bật hiển thị icon Link nếu đã có link
+          if (k==='soqdLink' && inp.value) {
+               const div = inp.closest('div');
+               if(div) {
+                   const btnUp = div.querySelector('.mini-up-btn'); const btnDel = div.querySelector('.mini-del-btn'); const vLink = div.querySelector('.view-link');
+                   if(btnUp) { btnUp.innerText = "✅"; btnUp.style.color = "green"; }
+                   if(btnDel) btnDel.style.display = "inline-block";
+                   if(vLink) { vLink.style.display = "inline"; vLink.href = inp.value.split(',')[0]; } // Hiển thị link đầu
+               }
+          }
+      });
+      showNotify("Dữ liệu đã được chuyển sang. Sửa xong hãy bấm [Lưu tất cả]", "success");
+  }
+
   function formatPercent(v) {
     if (v === "" || v === null || v === undefined) return "";
     let n = parseFloat(v); if (isNaN(n)) return v; if (Math.abs(n) <= 1 && n !== 0) n = n * 100; return Number(n.toFixed(2)) + "%";
@@ -370,6 +469,7 @@
     if (!dateStr) return ""; if (typeof dateStr === 'string') return dateStr; 
     try { const d = new Date(dateStr); return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`; } catch(e) { return dateStr; }
   }
+
   function saveAll() {
     const rows = document.querySelectorAll('.data-row'); const type = document.getElementById('u_comboLoai').value;
     const status = document.getElementById('updateStatus'); const dataList = []; let errorFound = false;
@@ -387,38 +487,64 @@
     }
     if (errorFound) return;
     if (dataList.length === 0) { showNotify("Chưa nhập dữ liệu nào hợp lệ.", "warning"); return; }
+    
+    const editRowIndex = document.getElementById('EDIT_ROW_INDEX').value;
     status.className = 'status-msg text-loading'; status.innerText = `⏳ Đang lưu...`;
-    google.script.run.withSuccessHandler(res => {
-        status.className = 'status-msg text-success'; status.innerText = "✅ " + res;
-        showNotify("✅ " + res, "success"); renderInputTableStructure();
-      }).withFailureHandler(e => {
-        status.className = 'status-msg text-error'; status.innerText = "❌ " + e.message; showNotify("❌ Lỗi: " + e.message, "error");
-      }).CD_doBatchUpdate(dataList);
+
+    // GỌI API: Cập nhật 1 dòng hoặc Thêm mới
+    if (editRowIndex) {
+         google.script.run.withSuccessHandler(res => {
+            status.className = 'status-msg text-success'; status.innerText = "✅ " + res;
+            showNotify("✅ " + res, "success"); 
+            document.getElementById('EDIT_ROW_INDEX').value = "";
+            document.getElementById('btn_addRow').style.display = 'inline-flex'; 
+            renderInputTableStructure(); 
+         }).withFailureHandler(e => {
+            status.className = 'status-msg text-error'; status.innerText = "❌ " + e.message; showNotify("❌ Lỗi: " + e.message, "error");
+         }).CD_updateRecord(type, editRowIndex, dataList[0]); 
+    } else {
+         google.script.run.withSuccessHandler(res => {
+            status.className = 'status-msg text-success'; status.innerText = "✅ " + res;
+            showNotify("✅ " + res, "success"); renderInputTableStructure();
+         }).withFailureHandler(e => {
+            status.className = 'status-msg text-error'; status.innerText = "❌ " + e.message; showNotify("❌ Lỗi: " + e.message, "error");
+         }).CD_doBatchUpdate(dataList);
+    }
   }
+
   function triggerUpload(btn) {
     const row = btn.closest('div'); const linkInput = row.querySelector('input[data-key="soqdLink"]');
     const textInput = row.querySelector('input[data-key="soqd"]'); const viewLink = row.querySelector('.view-link');
     const delBtn = row.querySelector('.mini-del-btn'); const oldUrl = linkInput ? linkInput.value : "";
+    
     if(typeof openUploadModal === 'function') {
-        openUploadModal(oldUrl, function(fileUrl, fileName) {
-            if (textInput && textInput.value.trim() === "") textInput.value = fileName;
-            if (linkInput) linkInput.value = fileUrl;
+        openUploadModal(oldUrl, function(fileUrl, fileName, wMode) {
+            // PHÂN BIỆT THAY THẾ VÀ CHÈN THÊM
+            if (wMode === 'append' && linkInput.value.trim() !== "") {
+                linkInput.value += "," + fileUrl;
+                textInput.value += ", " + fileName;
+            } else {
+                linkInput.value = fileUrl;
+                textInput.value = fileName;
+            }
             btn.innerText = "✅"; btn.style.color = "green"; 
-            if (viewLink) { viewLink.style.display = "inline"; viewLink.href = fileUrl; }
+            if (viewLink) { viewLink.style.display = "inline"; viewLink.href = linkInput.value.split(',')[0]; } 
             if (delBtn) delBtn.style.display = "inline-block";
         });
     } else { alert("Chưa kết nối được với file Upload Minh Chứng!"); }
   }
+
   function deleteFileInRow(btn) {
-      if(!confirm("Bạn có chắc chắn muốn xóa file đính kèm này không?")) return;
+      if(!confirm("Bạn có chắc chắn muốn xóa file đính kèm này trên Drive không?")) return;
       const row = btn.closest('div'); const linkInput = row.querySelector('input[data-key="soqdLink"]');
       const url = linkInput ? linkInput.value : "";
       if(!url) { resetRowFileUI(row); return; }
       btn.innerText = "⏳";
       google.script.run.withSuccessHandler(res => {
-          if(res.success) { resetRowFileUI(row); showNotify("Đã xóa file!", "success"); } else { btn.innerText = "❌"; showNotify("Lỗi: " + res.message, "error"); }
+          if(res.success) { resetRowFileUI(row); showNotify("Đã xóa file vĩnh viễn trên Drive!", "success"); } else { btn.innerText = "❌"; showNotify("Lỗi: " + res.message, "error"); }
       }).CD_deleteEvidence(url);
   }
+
   function resetRowFileUI(rowDiv) {
       const linkInput = rowDiv.querySelector('input[data-key="soqdLink"]'); const upBtn = rowDiv.querySelector('.mini-up-btn');
       const viewLink = rowDiv.querySelector('.view-link'); const delBtn = rowDiv.querySelector('.mini-del-btn');
@@ -446,6 +572,10 @@
           const btnUp = document.getElementById('btnTabUpdate'); if(btnUp) btnUp.remove();
           const divUp = document.getElementById('tab-update'); if(divUp) divUp.remove();
         }
+        
+        window.CD_CAN_EDIT = ctx.canEdit; // Lưu cờ quyền
+        initSearchTable(); // Khởi tạo lại bảng để hiển thị cột Sửa nếu có quyền
+        
         document.getElementById('mainApp').style.opacity = '1';
         if (ctx.canEdit) { google.script.run.withSuccessHandler(ok => { if(!ok) console.log("Drive Access Needed"); }).CD_hasDrivePermission(); }
       }).withFailureHandler(err => { 
