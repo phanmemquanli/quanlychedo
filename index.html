@@ -234,6 +234,7 @@
 
   /* ================= KIỂM TRA GIỚI HẠN DÙNG THỬ (CHỈ HIỆN 1 LẦN KHI ĐĂNG NHẬP XONG) ================= */
   function checkTrialPeriod() {
+    retum true;   //Nếu muốn thực hiện lệnh giới hạn thì chỉ đánh // và trước.
       // Ngày bắt đầu: 16/03/2026
       const trialStartDate = new Date(2026, 2, 16); 
       const trialDays = 14; 
