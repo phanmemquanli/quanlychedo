@@ -20,7 +20,8 @@
             const userEmail = sessionStorage.getItem("CD_USER_EMAIL") || "";
 
             fetch(SCRIPT_URL, {
-              method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
               body: JSON.stringify({ functionName: funcName, args: args, email: userEmail })
             })
             .then(res => res.json())
@@ -40,7 +41,6 @@
   </script>
 
   <style>
-    /* TOÀN BỘ CSS GIỮ NGUYÊN */
     :root { --primary: #1e3a8a; --bg: #f9fafb; --white: #ffffff; --border: #d1d5db; --red: #dc2626; --green: #059669; --orange: #d97706; }
     body { font-family: "Times New Roman", serif; background: var(--bg); margin: 0; padding: 0; color: #1f2937; font-size: 15px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
     .dev-info-badge { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: row; align-items: center; gap: 12px; padding: 6px 12px 6px 8px; background: rgba(255, 255, 255, 0.95); border-radius: 30px; border: double 1px transparent; background-image: linear-gradient(white, white), linear-gradient(135deg, var(--primary), #3b82f6); background-origin: border-box; background-clip: padding-box, border-box; box-shadow: 0 4px 15px rgba(30, 58, 138, 0.1); backdrop-filter: blur(8px); z-index: 1000; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
@@ -80,6 +80,7 @@
     .mini-btn { cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 13px; border: 1px solid #bae6fd; display: inline-block; margin-left: 2px; }
     .mini-up-btn { background: #e0f2fe; color: #0284c7; } .mini-up-btn:hover { background: #bae6fd; }
     .mini-del-btn { background: #fee2e2; color: #dc2626; border-color: #fecaca; display: none; } .mini-del-btn:hover { background: #fecaca; }
+    .view-link { display: none; margin-left: 5px; text-decoration: none; cursor: pointer; font-size: 16px; color: #1e3a8a; }
     .hidden { display: none !important; }
     .status-msg { margin-left: 10px; font-weight: bold; }
     .text-loading { color: var(--orange); } .text-success { color: var(--green); } .text-error { color: var(--red); }
@@ -236,8 +237,71 @@
       });
   };
 
-  function checkTrialPeriod() { return true; }
+  /* ================= KIỂM TRA GIỚI HẠN DÙNG THỬ BẬT LẠI ================= */
+  function checkTrialPeriod() {
+    return true; //Hủy giới hạn
+      // Ngày bắt đầu: 16/03/2026
+      const trialStartDate = new Date(2026, 2, 16); 
+      const trialDays = 14; 
+      
+      const trialExpiryDate = new Date(trialStartDate);
+      trialExpiryDate.setDate(trialStartDate.getDate() + trialDays);
+      const today = new Date();
 
+      const trialModalElement = document.getElementById('trialModalOverlay');
+      const btnTrialOk = document.getElementById('btnTrialOk');
+      const trialMessage = document.getElementById('trialMessage');
+      const trialTitle = document.getElementById('trialTitle');
+
+      if (!trialModalElement || !btnTrialOk) return true;
+
+      // NẾU ĐÃ QUÁ HẠN DÙNG THỬ (Luôn hiện chặn mọi lúc)
+      if (today > trialExpiryDate) {
+        trialTitle.innerText = "Hết hạn dùng thử";
+        trialTitle.style.color = "#dc3545"; 
+        trialMessage.innerHTML = `Thời gian dùng thử ${trialDays} ngày của bạn đã kết thúc.<br>Vui lòng liên hệ Admin để gia hạn phần mềm.`;
+        
+        btnTrialOk.innerText = 'Thoát hệ thống';
+        btnTrialOk.className = 'btn btn-danger';
+        btnTrialOk.onclick = function() { window.location.href = "https://www.google.com"; };
+        
+        trialModalElement.style.display = 'flex';
+        
+        const loginOverlay = document.getElementById('login-overlay');
+        if (loginOverlay) loginOverlay.style.display = 'none';
+        const mainApp = document.getElementById('mainApp');
+        if (mainApp) mainApp.style.display = 'none';
+        document.getElementById('pageLoading').style.display = 'none';
+        
+        return false; 
+      }
+      
+      // NẾU VẪN CÒN HẠN (Kiểm tra xem đã hiển thị trong phiên này chưa)
+      if (sessionStorage.getItem("TRIAL_SHOWN") === "true") {
+          return true; // Đã xem rồi thì bỏ qua luôn, đi thẳng vào hệ thống
+      }
+
+      // Chưa xem thì hiện thông báo
+      const d = trialStartDate.getDate().toString().padStart(2, '0');
+      const m = (trialStartDate.getMonth() + 1).toString().padStart(2, '0');
+      const y = trialStartDate.getFullYear();
+      
+      trialTitle.innerText = "Thông báo dùng thử";
+      trialTitle.style.color = "#333";
+      trialMessage.innerHTML = `Bạn đang trong thời gian dùng thử ${trialDays} ngày.<br>Ngày bắt đầu: <b>${d}/${m}/${y}</b>.`;
+      
+      btnTrialOk.innerText = 'Đồng ý';
+      btnTrialOk.className = 'btn btn-primary';
+      btnTrialOk.onclick = function() {
+          sessionStorage.setItem("TRIAL_SHOWN", "true"); // Ghi nhớ đã bấm đồng ý
+          trialModalElement.style.display = 'none';
+      };
+
+      trialModalElement.style.display = 'flex';
+      return true; 
+  }
+
+  /* --- CÁC HÀM XỬ LÝ CHÍNH KHÁC --- */
   function decodeJwtResponse(token) {
     let base64Url = token.split('.')[1]; let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join(''));
@@ -311,7 +375,6 @@
     thead.innerHTML = hHtml; tbody.innerHTML = ''; addRow();
   }
 
-  // --- CẬP NHẬT GIAO DIỆN CỘT QUYẾT ĐỊNH ĐỂ HIỆN SỐ LƯỢNG QĐ ---
   function addRow() {
     const type = document.getElementById('u_comboLoai').value; const cols = CONFIG[type]; const tbody = document.getElementById('u_tbody');
     const tr = document.createElement('tr'); tr.className = 'data-row'; let html = '<td class="stt-cell"></td>';
@@ -443,7 +506,7 @@
                    const btnUp = cell.querySelector('.mini-up-btn'); const btnDel = cell.querySelector('.mini-del-btn');
                    if(btnUp) { btnUp.innerText = "✅"; btnUp.style.color = "green"; }
                    if(btnDel) btnDel.style.display = "inline-block";
-                   renderDynamicLinks(cell); // Sinh nút QĐ1, QĐ2 khi chuyển qua
+                   renderDynamicLinks(cell); 
                }
           }
       });
@@ -501,7 +564,6 @@
     }
   }
 
-  // --- HÀM VẼ GIAO DIỆN QĐ1, QĐ2 ---
   function renderDynamicLinks(rowCell) {
       const linkInput = rowCell.querySelector('input[data-key="soqdLink"]');
       const container = rowCell.querySelector('.dynamic-links');
@@ -531,7 +593,7 @@
             }
             btn.innerText = "✅"; btn.style.color = "green"; 
             if (delBtn) delBtn.style.display = "inline-block";
-            renderDynamicLinks(rowCell); // Cập nhật lại giao diện các nút QĐ
+            renderDynamicLinks(rowCell); 
         });
     } else { alert("Chưa kết nối được với file Upload Minh Chứng!"); }
   }
