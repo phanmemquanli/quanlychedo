@@ -99,6 +99,15 @@
     .loading-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; background: linear-gradient(45deg, #0d6efd, #6610f2, #dc3545, #0d6efd); background-size: 300% 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: gradientMove 3s ease infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    .no-perm-box { background: #fff; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); width: 500px; max-width: 95%; overflow: hidden; font-family: "Times New Roman", serif; text-align: center; position: relative; }
+    .np-header { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 30px 20px; }
+    .np-icon { font-size: 50px; margin-bottom: 10px; display: block; animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+    .np-title { font-size: 22px; margin: 0; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+    .np-body { padding: 30px 20px; }
+    .np-msg { font-size: 16px; color: #4b5563; margin-bottom: 25px; line-height: 1.6; }
+    .np-btn { display: inline-block; background: #1e3a8a; color: white; border: none; cursor: pointer; padding: 12px 30px; border-radius: 30px; font-weight: bold; transition: all 0.3s; box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3); font-family: "Times New Roman", serif; font-size: 15px; }
+    .np-btn:hover { transform: scale(1.05); background: #1e40af; box-shadow: 0 6px 20px rgba(30, 58, 138, 0.4); }
   </style>
 </head>
 <body>
@@ -133,6 +142,16 @@
     
     <div style="width: 100%; text-align: center; margin-top: 30px; font-size: 12px; color: #999; font-weight: bold;">Nhà phát triển: HOÀNG NGỌC LÂM</div>
   </div>
+</div>
+
+<div id="accessDenied" class="overlay-screen" style="display:none; background: #f3f4f6;">
+   <div class="no-perm-box">
+      <div class="np-header"><span class="np-icon">🔒</span><h2 class="np-title">Hạn chế Quyền Truy Cập</h2></div>
+      <div class="np-body">
+         <p class="np-msg">Xin chào!<br>Tài khoản của bạn hiện chưa được cấp quyền truy cập.<br><br>Vui lòng liên hệ Admin hoặc Đăng xuất thử tài khoản khác để tiếp tục.</p>
+         <button class="np-btn" onclick="logoutGoogle()">🔄 Đăng xuất</button>
+      </div>
+   </div>
 </div>
 
 <div id="pageLoading" class="overlay-screen" style="display:none;">
@@ -199,7 +218,8 @@
   window.CD_CAN_EDIT = false; 
 
   document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById('pageLoading').style.display = 'flex';
+    const pl = document.getElementById('pageLoading');
+    if(pl) pl.style.display = 'flex';
     
     fetch('cd_minhchung.html')
       .then(response => {
@@ -208,12 +228,14 @@
       })
       .then(html => {
         const container = document.getElementById('minhchung-container');
-        container.innerHTML = html;
-        const scripts = container.getElementsByTagName("script");
-        for (let i = 0; i < scripts.length; i++) { 
-            const newScript = document.createElement("script");
-            newScript.text = scripts[i].innerText;
-            document.body.appendChild(newScript);
+        if(container) {
+            container.innerHTML = html;
+            const scripts = container.getElementsByTagName("script");
+            for (let i = 0; i < scripts.length; i++) { 
+                const newScript = document.createElement("script");
+                newScript.text = scripts[i].innerText;
+                document.body.appendChild(newScript);
+            }
         }
         startAppMain();
       }).catch(err => {
@@ -222,12 +244,12 @@
       });
   });
 
-  /* ================= KIỂM TRA GIỚI HẠN DÙNG THỬ CẬP NHẬT CHUẨN MẪU ================= */
+  /* ================= KIỂM TRA GIỚI HẠN THỜI GIAN SỬ DỤNG 14 NGÀY ================= */
   function checkTrialPeriod() {
       // return true; // Nếu // ở đây là tiếp tục kiểm tra
       
-      // Ngày bắt đầu: 16/03/2026 (Lưu ý: Tháng trong Javascript đếm từ 0, nên tháng 3 là số 2)
-      const trialStartDate = new Date(2026, 2, 16); 
+      // Ngày bắt đầu: 07/02/2026 (Lưu ý: Tháng trong Javascript đếm từ 0, nên tháng 2 là số 1)
+      const trialStartDate = new Date(2026, 1, 7); 
       const trialDays = 14; // Số ngày dùng thử
       
       const trialExpiryDate = new Date(trialStartDate);
@@ -243,51 +265,63 @@
 
       // NẾU ĐÃ QUÁ HẠN DÙNG THỬ
       if (today > trialExpiryDate) {
-        trialTitle.innerText = "Hết hạn dùng thử";
-        trialTitle.style.color = "#dc3545"; // Đổi màu đỏ cảnh báo
-        trialMessage.innerHTML = "Thời gian dùng thử 14 ngày của bạn đã kết thúc.<br>Vui lòng liên hệ Admin (Hoàng Ngọc Lâm) để gia hạn phần mềm.";
+        if(trialTitle) {
+            trialTitle.innerText = "Hết hạn dùng thử";
+            trialTitle.style.color = "#dc3545"; // Đổi màu đỏ cảnh báo
+        }
+        if(trialMessage) {
+            trialMessage.innerHTML = "Thời gian dùng thử 14 ngày của bạn đã kết thúc.<br>Vui lòng liên hệ Admin (Hoàng Ngọc Lâm) để gia hạn phần mềm.";
+        }
         
         // Biến nút Đồng ý thành nút Thoát
-        btnTrialOk.innerText = 'Thoát hệ thống';
-        btnTrialOk.classList.remove('btn-primary');
-        btnTrialOk.classList.add('btn-danger');
-        
-        btnTrialOk.onclick = function() {
-          window.location.href = "https://www.google.com"; // Điều hướng ra ngoài
-        };
+        if(btnTrialOk) {
+            btnTrialOk.innerText = 'Thoát hệ thống';
+            btnTrialOk.classList.remove('btn-primary');
+            btnTrialOk.classList.add('btn-danger');
+            btnTrialOk.onclick = function() {
+              window.location.href = "https://www.google.com"; // Điều hướng ra ngoài
+            };
+        }
         
         // Hiện thông báo khóa màn hình
-        trialModalElement.style.display = 'flex';
+        if(trialModalElement) trialModalElement.style.display = 'flex';
         
         // Ẩn tất cả các giao diện làm việc phía sau
         const loginOverlay = document.getElementById('login-overlay');
         if (loginOverlay) loginOverlay.style.display = 'none';
         const mainApp = document.getElementById('mainApp');
         if (mainApp) mainApp.style.display = 'none';
-        document.getElementById('pageLoading').style.display = 'none';
         
         return false; // Chặn hệ thống khởi động tiếp
       }
       
-      // NẾU VẪN CÒN HẠN (Hiện thông báo nhắc nhở rồi cho vào)
-      trialTitle.innerText = "Thông báo dùng thử";
-      trialTitle.style.color = "#333";
+      // NẾU VẪN CÒN HẠN
+      if (sessionStorage.getItem("TRIAL_SHOWN") === "true") {
+          return true; 
+      }
+
+      if(trialTitle) {
+          trialTitle.innerText = "Thông báo dùng thử";
+          trialTitle.style.color = "#333";
+      }
       const d = trialStartDate.getDate().toString().padStart(2, '0');
       const m = (trialStartDate.getMonth() + 1).toString().padStart(2, '0');
       const y = trialStartDate.getFullYear();
-      trialMessage.innerHTML = `Bạn đang trong thời gian dùng thử ${trialDays} ngày.<br>Ngày bắt đầu: <b>${d}/${m}/${y}</b>.`;
+      if(trialMessage) trialMessage.innerHTML = `Bạn đang trong thời gian dùng thử ${trialDays} ngày.<br>Ngày bắt đầu: <b>${d}/${m}/${y}</b>.`;
       
-      btnTrialOk.innerText = 'Đồng ý';
-      btnTrialOk.className = 'btn btn-primary';
-      btnTrialOk.style.display = 'flex';
-      btnTrialOk.style.justifyContent = 'center';
-      btnTrialOk.style.margin = '15px auto 0 auto';
+      if(btnTrialOk) {
+          btnTrialOk.innerText = 'Đồng ý';
+          btnTrialOk.className = 'btn btn-primary';
+          btnTrialOk.style.display = 'flex';
+          btnTrialOk.style.justifyContent = 'center';
+          btnTrialOk.style.margin = '15px auto 0 auto';
+          btnTrialOk.onclick = function() {
+              sessionStorage.setItem("TRIAL_SHOWN", "true");
+              if(trialModalElement) trialModalElement.style.display = 'none';
+          };
+      }
 
-      btnTrialOk.onclick = function() {
-          trialModalElement.style.display = 'none';
-      };
-
-      trialModalElement.style.display = 'flex';
+      if(trialModalElement) trialModalElement.style.display = 'flex';
       return true; // Cho phép hệ thống tiếp tục khởi động
   }
 
@@ -306,18 +340,34 @@
   
   function logoutGoogle() { 
       sessionStorage.removeItem("CD_USER_EMAIL"); 
+      sessionStorage.removeItem("TRIAL_SHOWN"); 
       location.reload(); 
   }
   
   function showNotify(msg, type='warning') {
       const modal = document.getElementById('notify_modal'); const icon = document.getElementById('notify_icon');
       const title = document.getElementById('notify_title'); const desc = document.getElementById('notify_desc');
-      modal.style.display = 'flex'; desc.innerHTML = msg;
-      if(type === 'success') { icon.innerText = '✅'; title.innerText = 'Thành công'; title.style.color = 'var(--green)'; } 
-      else if (type === 'error') { icon.innerText = '❌'; title.innerText = 'Lỗi'; title.style.color = 'var(--red)'; } 
-      else { icon.innerText = '⚠️'; title.innerText = 'Lưu ý'; title.style.color = 'var(--orange)'; }
+      if(modal) modal.style.display = 'flex'; 
+      if(desc) desc.innerHTML = msg;
+      
+      if(type === 'success') { 
+          if(icon) icon.innerText = '✅'; 
+          if(title) { title.innerText = 'Thành công'; title.style.color = 'var(--green)'; }
+      } 
+      else if (type === 'error') { 
+          if(icon) icon.innerText = '❌'; 
+          if(title) { title.innerText = 'Lỗi'; title.style.color = 'var(--red)'; }
+      } 
+      else { 
+          if(icon) icon.innerText = '⚠️'; 
+          if(title) { title.innerText = 'Lưu ý'; title.style.color = 'var(--orange)'; }
+      }
   }
-  function closeNotify() { document.getElementById('notify_modal').style.display = 'none'; }
+  
+  function closeNotify() { 
+      const modal = document.getElementById('notify_modal');
+      if(modal) modal.style.display = 'none'; 
+  }
   
   const CONFIG = {
     LUONG: [
@@ -344,28 +394,49 @@
   
   function switchTab(t) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-search').classList.add('hidden'); document.getElementById('tab-update').classList.add('hidden');
+    const tSearch = document.getElementById('tab-search');
+    if(tSearch) tSearch.classList.add('hidden'); 
+    const tUpdate = document.getElementById('tab-update');
+    if(tUpdate) tUpdate.classList.add('hidden');
     
-    document.getElementById('EDIT_ROW_INDEX').value = "";
-    document.getElementById('btn_addRow').style.display = 'inline-flex';
+    const editRow = document.getElementById('EDIT_ROW_INDEX');
+    if(editRow) editRow.value = "";
+    
+    const btnAdd = document.getElementById('btn_addRow');
+    if(btnAdd) btnAdd.style.display = 'inline-flex';
 
     if (t === 'search') {
-      document.getElementById('btnTabSearch').classList.add('active'); document.getElementById('tab-search').classList.remove('hidden');
+      const btnTabSrch = document.getElementById('btnTabSearch');
+      if(btnTabSrch) btnTabSrch.classList.add('active'); 
+      if(tSearch) tSearch.classList.remove('hidden');
     } else {
-      document.getElementById('btnTabUpdate').classList.add('active'); document.getElementById('tab-update').classList.remove('hidden');
-      renderInputTableStructure(); if(typeof loadFolders === 'function') loadFolders();
+      const btnTabUpd = document.getElementById('btnTabUpdate');
+      if(btnTabUpd) btnTabUpd.classList.add('active'); 
+      if(tUpdate) tUpdate.classList.remove('hidden');
+      renderInputTableStructure(); 
+      if(typeof loadFolders === 'function') loadFolders();
     }
   }
 
   function renderInputTableStructure() {
-    const type = document.getElementById('u_comboLoai').value; const cols = CONFIG[type];
-    const thead = document.getElementById('u_thead'); const tbody = document.getElementById('u_tbody');
+    const cbo = document.getElementById('u_comboLoai');
+    if(!cbo) return;
+    const type = cbo.value; const cols = CONFIG[type];
+    const thead = document.getElementById('u_thead'); 
+    const tbody = document.getElementById('u_tbody');
+    if(!thead || !tbody) return;
+    
     let hHtml = '<tr><th style="width:30px">#</th>'; cols.forEach(c => hHtml += `<th>${c.name}</th>`); hHtml += '</tr>';
     thead.innerHTML = hHtml; tbody.innerHTML = ''; addRow();
   }
 
   function addRow() {
-    const type = document.getElementById('u_comboLoai').value; const cols = CONFIG[type]; const tbody = document.getElementById('u_tbody');
+    const cbo = document.getElementById('u_comboLoai');
+    if(!cbo) return;
+    const type = cbo.value; const cols = CONFIG[type]; 
+    const tbody = document.getElementById('u_tbody');
+    if(!tbody) return;
+    
     const tr = document.createElement('tr'); tr.className = 'data-row'; let html = '<td class="stt-cell"></td>';
     cols.forEach(c => {
       if (c.type === 'del') { html += `<td><button class="btn btn-danger" onclick="removeRow(this)" style="padding:2px 8px;">×</button></td>`; } 
@@ -390,26 +461,36 @@
 
   function removeRow(btn) { 
       const tbody = document.getElementById('u_tbody');
-      if (tbody.rows.length > 1) { btn.closest('tr').remove(); updateSTT(); } else showNotify("Cần giữ lại ít nhất 1 dòng để nhập liệu.");
+      if (tbody && tbody.rows.length > 1) { btn.closest('tr').remove(); updateSTT(); } 
+      else showNotify("Cần giữ lại ít nhất 1 dòng để nhập liệu.");
   }
   function updateSTT() { document.querySelectorAll('.stt-cell').forEach((td, i) => td.innerText = i + 1); }
 
   function initSearchTable() {
-    const loai = document.getElementById('s_comboLoai').value; 
+    const cbo = document.getElementById('s_comboLoai');
+    if(!cbo) return;
+    const loai = cbo.value; 
     const thead = document.getElementById('s_thead'); 
+    const tbody = document.getElementById('s_tbody');
+    if(!thead || !tbody) return;
+    
     let h = '<tr>';
     if (window.CD_CAN_EDIT) h += '<th>Sửa</th>'; 
     h += '<th>STT</th>';
     
     if (loai === 'LUONG') { h += `<th class="text-left">Họ tên</th><th>Mã</th><th>Bậc</th><th>Hệ số</th><th>Ngày Hưởng</th><th>Bậc Nâng</th><th>HS Nâng</th><th>Ngày Nâng</th><th>Số Quyết định</th><th>Ngày CT</th></tr>`; } 
     else { h += `<th class="text-left">Họ tên</th><th>TL% hiện hưởng</th><th>Ngày Hưởng</th><th>TL% Nâng</th><th>Ngày Nâng</th><th>Số Quyết định</th></tr>`; }
-    thead.innerHTML = h; document.getElementById('s_tbody').innerHTML = '<tr><td colspan="15" style="color:#666; padding:15px;">...</td></tr>';
+    thead.innerHTML = h; tbody.innerHTML = '<tr><td colspan="15" style="color:#666; padding:15px;">...</td></tr>';
   }
 
   function doSearch() {
-    const loai = document.getElementById('s_comboLoai').value;
+    const cbo = document.getElementById('s_comboLoai');
+    if(!cbo) return;
+    const loai = cbo.value;
     const boLoc = { text8: document.getElementById('s_hoten').value, text2: document.getElementById('s_thang').value, text3: document.getElementById('s_nam').value };
-    const tbody = document.getElementById('s_tbody'); tbody.innerHTML = '<tr><td colspan="15">⏳ Đang tải...</td></tr>';
+    const tbody = document.getElementById('s_tbody'); 
+    if(!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="15">⏳ Đang tải...</td></tr>';
     
     window.google.script.run.withSuccessHandler(rows => {
       if(!rows || rows.length === 0) { tbody.innerHTML = '<tr><td colspan="15">Không có dữ liệu phù hợp.</td></tr>'; return; }
@@ -460,20 +541,29 @@
 
   function transferToEdit(dataEncoded, loai) {
       const r = JSON.parse(decodeURIComponent(dataEncoded));
-      document.getElementById('u_comboLoai').value = loai;
+      const cbo = document.getElementById('u_comboLoai');
+      if(cbo) cbo.value = loai;
       renderInputTableStructure();
       
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('tab-search').classList.add('hidden'); 
-      document.getElementById('tab-update').classList.add('hidden');
-      document.getElementById('btnTabUpdate').classList.add('active'); 
-      document.getElementById('tab-update').classList.remove('hidden');
+      const tSearch = document.getElementById('tab-search');
+      if(tSearch) tSearch.classList.add('hidden'); 
+      const tUpdate = document.getElementById('tab-update');
+      if(tUpdate) {
+          tUpdate.classList.add('hidden');
+          tUpdate.classList.remove('hidden');
+      }
+      const bUpdate = document.getElementById('btnTabUpdate');
+      if(bUpdate) bUpdate.classList.add('active'); 
 
       const rowIndex = r[18];
-      document.getElementById('EDIT_ROW_INDEX').value = rowIndex; 
-      document.getElementById('btn_addRow').style.display = 'none';
+      const editRow = document.getElementById('EDIT_ROW_INDEX');
+      if(editRow) editRow.value = rowIndex; 
+      const btnAdd = document.getElementById('btn_addRow');
+      if(btnAdd) btnAdd.style.display = 'none';
 
       const tr = document.querySelector('#u_tbody .data-row');
+      if(!tr) return;
       const inputs = tr.querySelectorAll('input');
       
       inputs.forEach(inp => {
@@ -525,8 +615,13 @@
   }
 
   function saveAll() {
-    const rows = document.querySelectorAll('.data-row'); const type = document.getElementById('u_comboLoai').value;
-    const status = document.getElementById('updateStatus'); const dataList = []; let errorFound = false;
+    const rows = document.querySelectorAll('.data-row'); 
+    const cbo = document.getElementById('u_comboLoai');
+    if(!cbo) return;
+    const type = cbo.value;
+    const status = document.getElementById('updateStatus'); 
+    const dataList = []; let errorFound = false;
+    
     for (let i = 0; i < rows.length; i++) {
         const tr = rows[i]; const inputs = tr.querySelectorAll('input'); const rowData = { loai: type }; let hasData = false; let hotenInput = null;
         inputs.forEach(inp => {
@@ -543,24 +638,28 @@
     if (dataList.length === 0) { showNotify("Chưa nhập dữ liệu nào hợp lệ.", "warning"); return; }
     
     const editRowIndex = document.getElementById('EDIT_ROW_INDEX').value;
-    status.className = 'status-msg text-loading'; status.innerText = `⏳ Đang lưu...`;
+    if(status) { status.className = 'status-msg text-loading'; status.innerText = `⏳ Đang lưu...`; }
 
     if (editRowIndex) {
          window.google.script.run.withSuccessHandler(res => {
-            status.className = 'status-msg text-success'; status.innerText = "✅ " + res;
+            if(status) { status.className = 'status-msg text-success'; status.innerText = "✅ " + res; }
             showNotify("✅ " + res, "success"); 
-            document.getElementById('EDIT_ROW_INDEX').value = "";
-            document.getElementById('btn_addRow').style.display = 'inline-flex'; 
+            const editRow = document.getElementById('EDIT_ROW_INDEX');
+            if(editRow) editRow.value = "";
+            const btnAdd = document.getElementById('btn_addRow');
+            if(btnAdd) btnAdd.style.display = 'inline-flex'; 
             renderInputTableStructure(); 
          }).withFailureHandler(e => {
-            status.className = 'status-msg text-error'; status.innerText = "❌ " + e.message; showNotify("❌ Lỗi: " + e.message, "error");
+            if(status) { status.className = 'status-msg text-error'; status.innerText = "❌ " + e.message; }
+            showNotify("❌ Lỗi: " + e.message, "error");
          }).CD_updateRecord(type, editRowIndex, dataList[0]); 
     } else {
          window.google.script.run.withSuccessHandler(res => {
-            status.className = 'status-msg text-success'; status.innerText = "✅ " + res;
+            if(status) { status.className = 'status-msg text-success'; status.innerText = "✅ " + res; }
             showNotify("✅ " + res, "success"); renderInputTableStructure();
          }).withFailureHandler(e => {
-            status.className = 'status-msg text-error'; status.innerText = "❌ " + e.message; showNotify("❌ Lỗi: " + e.message, "error");
+            if(status) { status.className = 'status-msg text-error'; status.innerText = "❌ " + e.message; }
+            showNotify("❌ Lỗi: " + e.message, "error");
          }).CD_doBatchUpdate(dataList);
     }
   }
@@ -629,21 +728,38 @@
 
   function startAppMain() {
     try {
-        if (!checkTrialPeriod()) return; // [CẬP NHẬT] Đã gắn lại hàm chặn kiểm tra ở đây
+        initSearchTable(); 
+        const sInputs = ['s_hoten', 's_thang', 's_nam'];
+        sInputs.forEach(id => { 
+            const el = document.getElementById(id); 
+            if(el) el.addEventListener("keyup", function(e) { if(e.key === 'Enter') doSearch(); }); 
+        });
         
-        initSearchTable(); const sInputs = ['s_hoten', 's_thang', 's_nam'];
-        sInputs.forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener("keyup", function(e) { if(e.key === 'Enter') doSearch(); }); });
         const storedEmail = sessionStorage.getItem("CD_USER_EMAIL");
         
         if (!storedEmail) {
-          document.getElementById('login-overlay').style.display = 'flex'; document.getElementById('pageLoading').style.display = 'none';
+          const elLogin = document.getElementById('login-overlay');
+          if(elLogin) elLogin.style.display = 'flex'; 
+          const elLoading = document.getElementById('pageLoading');
+          if(elLoading) elLoading.style.display = 'none';
         } else {
-          document.getElementById('login-overlay').style.display = 'none'; document.getElementById('pageLoading').style.display = 'flex';
-          document.getElementById('loading-msg').innerText = "Đang kiểm tra quyền truy cập...";
+          const elLogin = document.getElementById('login-overlay');
+          if(elLogin) elLogin.style.display = 'none'; 
+          const elLoading = document.getElementById('pageLoading');
+          if(elLoading) elLoading.style.display = 'flex';
+          const loadMsg = document.getElementById('loading-msg');
+          if(loadMsg) loadMsg.innerText = "Đang kiểm tra quyền truy cập...";
           
           window.google.script.run.withSuccessHandler(ctx => {
-            document.getElementById('pageLoading').style.display = 'none';
-            if (!ctx.canView && !ctx.canEdit) { document.getElementById('accessDenied').style.display = 'flex'; return; }
+            const elLoad2 = document.getElementById('pageLoading');
+            if(elLoad2) elLoad2.style.display = 'none';
+            
+            if (!ctx.canView && !ctx.canEdit) { 
+                const elDenied = document.getElementById('accessDenied');
+                if(elDenied) elDenied.style.display = 'flex'; 
+                return; 
+            }
+            
             if (!ctx.canEdit) {
               const btnUp = document.getElementById('btnTabUpdate'); if(btnUp) btnUp.remove();
               const divUp = document.getElementById('tab-update'); if(divUp) divUp.remove();
@@ -652,14 +768,24 @@
             window.CD_CAN_EDIT = ctx.canEdit; 
             initSearchTable(); 
             
-            document.getElementById('mainApp').style.opacity = '1';
-            if (ctx.canEdit) { window.google.script.run.withSuccessHandler(ok => { if(!ok) console.log("Drive Access Needed"); }).CD_hasDrivePermission(); }
+            const mainApp = document.getElementById('mainApp');
+            if(mainApp) mainApp.style.opacity = '1';
+            
+            // CHỈ KÍCH HOẠT THÔNG BÁO DÙNG THỬ SAU KHI XÁC THỰC THÀNH CÔNG VÀ LOAD XONG
+            checkTrialPeriod();
+            
+            if (ctx.canEdit) { 
+                window.google.script.run.withSuccessHandler(ok => { if(!ok) console.log("Drive Access Needed"); }).CD_hasDrivePermission(); 
+            }
           }).withFailureHandler(err => { 
-              document.getElementById('pageLoading').style.display = 'none'; showNotify("Lỗi hệ thống: " + err.message, "error"); 
+              const elLoad3 = document.getElementById('pageLoading');
+              if(elLoad3) elLoad3.style.display = 'none'; 
+              showNotify("Lỗi hệ thống: " + err.message, "error"); 
           }).CD_getUserContext(storedEmail);
         }
     } catch (e) {
-        document.getElementById('pageLoading').style.display = 'none';
+        const elLoad4 = document.getElementById('pageLoading');
+        if(elLoad4) elLoad4.style.display = 'none';
         alert("Có lỗi trong quá trình khởi tạo ứng dụng: " + e.message);
     }
   }
