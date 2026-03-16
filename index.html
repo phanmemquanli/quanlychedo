@@ -91,10 +91,11 @@
     .msg-icon { font-size: 40px; margin-bottom: 10px; display: block; }
     .msg-title { font-size: 18px; font-weight: bold; margin: 0 0 10px 0; color: #333; }
     .msg-desc { color: #4b5563; font-size: 15px; line-height: 1.5; margin-bottom: 20px; }
+    
     #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0fdf4; z-index: 100000; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: "Times New Roman", serif; }
     .login-box { background: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid #0d6efd; width: 90%; max-width: 450px; box-sizing: border-box; }
     .login-logo { width: 80px; height: 80px; margin-bottom: 15px; }
-    #pageLoading { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(5px); }
+    #pageLoading { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(5px); z-index: 100000;}
     .spinner-ring { width: 60px; height: 60px; border: 5px solid rgba(0, 0, 0, 0.1); border-left-color: #0d6efd; border-top-color: #dc3545; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     .loading-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; background: linear-gradient(45deg, #0d6efd, #6610f2, #dc3545, #0d6efd); background-size: 300% 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: gradientMove 3s ease infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -114,19 +115,16 @@
 
 <div id="minhchung-container"></div>
 
-<div id="hetHanOverlay" class="overlay-screen" style="display:none; background: #f3f4f6; z-index: 999999;">
-   <div class="no-perm-box">
-      <div class="np-header" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">
-          <span class="np-icon" style="animation: none;">⏳</span>
-          <h2 class="np-title">HẾT HẠN SỬ DỤNG</h2>
+<div id="trialModalOverlay" class="overlay-screen" style="display:none; z-index: 9999999; background: rgba(0,0,0,0.6);">
+   <div class="msg-box" style="max-width: 450px; padding: 40px 30px; background: rgba(255, 255, 255, 0.95);">
+      <div style="margin-bottom: 20px;">
+         <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" width="120">
       </div>
-      <div class="np-body">
-         <p class="np-msg">Hệ thống đã vượt quá thời gian sử dụng <b>14 ngày</b>.<br><br>Vui lòng liên hệ nhà phát triển để được hỗ trợ gia hạn.</p>
-         <div style="font-size: 15px; font-weight: bold; color: #1e3a8a; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;">
-             Tác giả: HOÀNG NGỌC LÂM<br>
-             Đơn vị: Trường TH Hợp Thành
-         </div>
+      <h2 id="trialTitle" class="msg-title" style="color: #333; font-size: 22px; margin-bottom: 15px; font-family: 'Segoe UI', sans-serif;">Thông báo dùng thử</h2>
+      <div id="trialMessage" class="msg-desc" style="font-size: 16px; color: #6c757d; font-family: 'Segoe UI', sans-serif; line-height: 1.6;">
+          Bạn đang trong thời gian dùng thử 14 ngày.
       </div>
+      <button id="btnTrialOk" class="btn btn-primary" style="padding: 10px 40px; font-size: 16px; margin-top: 15px;">Đồng ý</button>
    </div>
 </div>
 
@@ -221,7 +219,11 @@
         const container = document.getElementById('minhchung-container');
         container.innerHTML = html;
         const scripts = container.getElementsByTagName("script");
-        for (let i = 0; i < scripts.length; i++) { eval(scripts[i].innerText); }
+        for (let i = 0; i < scripts.length; i++) { 
+            const newScript = document.createElement("script");
+            newScript.text = scripts[i].innerText;
+            document.body.appendChild(newScript);
+        }
         startAppMain();
       }).catch(err => {
         console.error("Lỗi không tải được cd_minhchung:", err);
@@ -229,25 +231,67 @@
       });
   };
 
-  /* ================= KIỂM TRA GIỚI HẠN THỜI GIAN SỬ DỤNG 14 NGÀY ================= */
-  const NGAY_BAT_DAU = new Date("2026-03-16"); 
-  const SO_NGAY_GIOI_HAN = 14;
+  /* ================= KIỂM TRA GIỚI HẠN DÙNG THỬ Y NHƯ MẪU ================= */
+  function checkTrialPeriod() {
+      // Ngày bắt đầu: 16/03/2026 (Tháng đếm từ 0, nên 03 là số 2)
+      const trialStartDate = new Date(2026, 2, 16); 
+      const trialDays = 14; 
+      
+      const trialExpiryDate = new Date(trialStartDate);
+      trialExpiryDate.setDate(trialStartDate.getDate() + trialDays);
+      const today = new Date();
 
-  function kiemTraHetHan() {
+      const trialModalElement = document.getElementById('trialModalOverlay');
+      const btnTrialOk = document.getElementById('btnTrialOk');
+      const trialMessage = document.getElementById('trialMessage');
+      const trialTitle = document.getElementById('trialTitle');
 
-return true;	//để // trước sẽ hoạt dong
-      const homNay = new Date();
-      const thoiGianDaQua = homNay.getTime() - NGAY_BAT_DAU.getTime();
-      const soNgayDaQua = Math.floor(thoiGianDaQua / (1000 * 3600 * 24));
-      if (soNgayDaQua >= SO_NGAY_GIOI_HAN) {
-          document.getElementById('hetHanOverlay').style.display = 'flex';
-          const loginOverlay = document.getElementById('login-overlay');
-          if (loginOverlay) loginOverlay.style.display = 'none';
-          const mainApp = document.getElementById('mainApp');
-          if (mainApp) mainApp.style.display = 'none';
-          return true;
+      if (!trialModalElement || !btnTrialOk) return true;
+
+      // NẾU ĐÃ QUÁ HẠN DÙNG THỬ
+      if (today > trialExpiryDate) {
+        trialTitle.innerText = "Hết hạn dùng thử";
+        trialTitle.style.color = "#dc3545"; 
+        trialMessage.innerHTML = `Thời gian dùng thử ${trialDays} ngày của bạn đã kết thúc.<br>Vui lòng liên hệ Admin (Hoàng Ngọc Lâm) để gia hạn phần mềm.`;
+        
+        // Biến nút Đồng ý thành nút Thoát
+        btnTrialOk.innerText = 'Thoát hệ thống';
+        btnTrialOk.className = 'btn btn-danger';
+        
+        btnTrialOk.onclick = function() {
+          window.location.href = "https://www.google.com"; 
+        };
+        
+        // Hiện thông báo khóa màn hình
+        trialModalElement.style.display = 'flex';
+        
+        // Ẩn tất cả các giao diện làm việc phía sau
+        const loginOverlay = document.getElementById('login-overlay');
+        if (loginOverlay) loginOverlay.style.display = 'none';
+        const mainApp = document.getElementById('mainApp');
+        if (mainApp) mainApp.style.display = 'none';
+        document.getElementById('pageLoading').style.display = 'none';
+        
+        return false; // Chặn hệ thống khởi động tiếp
       }
-      return false; 
+      
+      // NẾU VẪN CÒN HẠN
+      const d = trialStartDate.getDate().toString().padStart(2, '0');
+      const m = (trialStartDate.getMonth() + 1).toString().padStart(2, '0');
+      const y = trialStartDate.getFullYear();
+      
+      trialTitle.innerText = "Thông báo dùng thử";
+      trialTitle.style.color = "#333";
+      trialMessage.innerHTML = `Bạn đang trong thời gian dùng thử ${trialDays} ngày.<br>Ngày bắt đầu: <b>${d}/${m}/${y}</b>.`;
+      
+      btnTrialOk.innerText = 'Đồng ý';
+      btnTrialOk.className = 'btn btn-primary';
+      btnTrialOk.onclick = function() {
+          trialModalElement.style.display = 'none';
+      };
+
+      trialModalElement.style.display = 'flex';
+      return true; // Cho phép hệ thống tiếp tục khởi động
   }
 
   /* --- CÁC HÀM XỬ LÝ CHÍNH KHÁC --- */
@@ -430,10 +474,13 @@ return true;	//để // trước sẽ hoạt dong
   }
 
   function startAppMain() {
-    if (kiemTraHetHan()) return;
+    const isTrialValid = checkTrialPeriod();
+    if (!isTrialValid) return; // Nếu hết hạn thì chặn dừng luôn
+    
     initSearchTable(); const sInputs = ['s_hoten', 's_thang', 's_nam'];
     sInputs.forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener("keyup", function(e) { if(e.key === 'Enter') doSearch(); }); });
     const storedEmail = sessionStorage.getItem("CD_USER_EMAIL");
+    
     if (!storedEmail) {
       document.getElementById('login-overlay').style.display = 'flex'; document.getElementById('pageLoading').style.display = 'none';
     } else {
