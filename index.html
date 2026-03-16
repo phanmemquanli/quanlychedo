@@ -9,33 +9,33 @@
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuvwPLKjGmcxqtwsur2h9GLJMsG0vayOcnTxgeiaZT0shYWhaj6dO__WGmGKV93HE3/exec";
 
-    const google = {
-      script: {
-        run: {
-          withSuccessHandler: function(handler) { this._successHandler = handler; return this; },
-          withFailureHandler: function(handler) { this._failureHandler = handler; return this; },
-          _callServer: function(funcName, args) {
-            const success = this._successHandler; const failure = this._failureHandler;
-            this._successHandler = null; this._failureHandler = null;
-            const userEmail = sessionStorage.getItem("CD_USER_EMAIL") || "";
+    // Khởi tạo an toàn, tránh xung đột với thư viện đăng nhập Google
+    window.google = window.google || {};
+    window.google.script = {
+      run: {
+        withSuccessHandler: function(handler) { this._successHandler = handler; return this; },
+        withFailureHandler: function(handler) { this._failureHandler = handler; return this; },
+        _callServer: function(funcName, args) {
+          const success = this._successHandler; const failure = this._failureHandler;
+          this._successHandler = null; this._failureHandler = null;
+          const userEmail = sessionStorage.getItem("CD_USER_EMAIL") || "";
 
-            fetch(SCRIPT_URL, {
-              method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-              body: JSON.stringify({ functionName: funcName, args: args, email: userEmail })
-            })
-            .then(res => res.json())
-            .then(res => {
-              if (res.error) { if (failure) failure(new Error(res.error)); else console.error(res.error); } 
-              else { if (success) success(res.data); }
-            })
-            .catch(err => { if (failure) failure(err); else console.error(err); });
-          }
+          fetch(SCRIPT_URL, {
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ functionName: funcName, args: args, email: userEmail })
+          })
+          .then(res => res.json())
+          .then(res => {
+            if (res.error) { if (failure) failure(new Error(res.error)); else console.error(res.error); } 
+            else { if (success) success(res.data); }
+          })
+          .catch(err => { if (failure) failure(err); else console.error(err); });
         }
       }
     };
 
     ['CD_getSubFolders', 'CD_uploadMultipleFilesToDrive', 'CD_uploadFolderEvidence', 'CD_deleteEvidence', 'CD_doBatchUpdate', 'CD_updateRecord', 'CD_searchLuong', 'CD_searchThamNien', 'CD_getUserContext', 'CD_hasDrivePermission'].forEach(func => {
-      google.script.run[func] = function(...args) { this._callServer(func, args); };
+      window.google.script.run[func] = function(...args) { this._callServer(func, args); };
     });
   </script>
 
@@ -220,10 +220,15 @@
 <script>
   window.CD_CAN_EDIT = false; 
 
-  window.onload = function() {
+  // [ĐÃ SỬA LỖI TREO KHI LOAD] Dùng DOMContentLoaded thay vì window.onload để ứng dụng khởi động ngay
+  document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('pageLoading').style.display = 'flex';
+    
     fetch('cd_minhchung.html')
-      .then(response => response.text())
+      .then(response => {
+          if (!response.ok) throw new Error("Lỗi HTTP: " + response.status);
+          return response.text();
+      })
       .then(html => {
         const container = document.getElementById('minhchung-container');
         container.innerHTML = html;
@@ -235,17 +240,17 @@
         }
         startAppMain();
       }).catch(err => {
-        console.error("Lỗi không tải được cd_minhchung:", err);
+        console.error("Lỗi tải cd_minhchung.html:", err);
+        // Khởi chạy App ngay cả khi file minh chứng lỗi
         startAppMain();
       });
-  };
+  });
 
   /* ================= KIỂM TRA GIỚI HẠN THỜI GIAN SỬ DỤNG 14 NGÀY THEO FILE GỐC ================= */
   const NGAY_BAT_DAU = new Date("2026-03-16"); 
   const SO_NGAY_GIOI_HAN = 14;
 
   function kiemTraHetHan() {
-     return true; //Dừng chạy giới hạn, nếu chạy thì đặt // ra đầu
       const homNay = new Date();
       const thoiGianDaQua = homNay.getTime() - NGAY_BAT_DAU.getTime();
       const soNgayDaQua = Math.floor(thoiGianDaQua / (1000 * 3600 * 24));
@@ -385,7 +390,7 @@
     const boLoc = { text8: document.getElementById('s_hoten').value, text2: document.getElementById('s_thang').value, text3: document.getElementById('s_nam').value };
     const tbody = document.getElementById('s_tbody'); tbody.innerHTML = '<tr><td colspan="15">⏳ Đang tải...</td></tr>';
     
-    google.script.run.withSuccessHandler(rows => {
+    window.google.script.run.withSuccessHandler(rows => {
       if(!rows || rows.length === 0) { tbody.innerHTML = '<tr><td colspan="15">Không có dữ liệu phù hợp.</td></tr>'; return; }
       let h = '';
       rows.forEach((r, i) => {
@@ -520,7 +525,7 @@
     status.className = 'status-msg text-loading'; status.innerText = `⏳ Đang lưu...`;
 
     if (editRowIndex) {
-         google.script.run.withSuccessHandler(res => {
+         window.google.script.run.withSuccessHandler(res => {
             status.className = 'status-msg text-success'; status.innerText = "✅ " + res;
             showNotify("✅ " + res, "success"); 
             document.getElementById('EDIT_ROW_INDEX').value = "";
@@ -530,7 +535,7 @@
             status.className = 'status-msg text-error'; status.innerText = "❌ " + e.message; showNotify("❌ Lỗi: " + e.message, "error");
          }).CD_updateRecord(type, editRowIndex, dataList[0]); 
     } else {
-         google.script.run.withSuccessHandler(res => {
+         window.google.script.run.withSuccessHandler(res => {
             status.className = 'status-msg text-success'; status.innerText = "✅ " + res;
             showNotify("✅ " + res, "success"); renderInputTableStructure();
          }).withFailureHandler(e => {
@@ -581,7 +586,7 @@
       if(!url) { resetRowFileUI(rowCell); return; }
       
       btn.innerText = "⏳";
-      google.script.run.withSuccessHandler(res => {
+      window.google.script.run.withSuccessHandler(res => {
           if(res.success) { resetRowFileUI(rowCell); showNotify("Đã xóa file vĩnh viễn trên Drive!", "success"); } 
           else { btn.innerText = "❌"; showNotify("Lỗi: " + res.message, "error"); }
       }).CD_deleteEvidence(url);
@@ -602,33 +607,39 @@
   }
 
   function startAppMain() {
-    if (kiemTraHetHan()) return; 
-    
-    initSearchTable(); const sInputs = ['s_hoten', 's_thang', 's_nam'];
-    sInputs.forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener("keyup", function(e) { if(e.key === 'Enter') doSearch(); }); });
-    const storedEmail = sessionStorage.getItem("CD_USER_EMAIL");
-    
-    if (!storedEmail) {
-      document.getElementById('login-overlay').style.display = 'flex'; document.getElementById('pageLoading').style.display = 'none';
-    } else {
-      document.getElementById('login-overlay').style.display = 'none'; document.getElementById('pageLoading').style.display = 'flex';
-      document.getElementById('loading-msg').innerText = "Đang kiểm tra quyền truy cập...";
-      google.script.run.withSuccessHandler(ctx => {
-        document.getElementById('pageLoading').style.display = 'none';
-        if (!ctx.canView && !ctx.canEdit) { document.getElementById('accessDenied').style.display = 'flex'; return; }
-        if (!ctx.canEdit) {
-          const btnUp = document.getElementById('btnTabUpdate'); if(btnUp) btnUp.remove();
-          const divUp = document.getElementById('tab-update'); if(divUp) divUp.remove();
+    try {
+        if (kiemTraHetHan()) return; 
+        
+        initSearchTable(); const sInputs = ['s_hoten', 's_thang', 's_nam'];
+        sInputs.forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener("keyup", function(e) { if(e.key === 'Enter') doSearch(); }); });
+        const storedEmail = sessionStorage.getItem("CD_USER_EMAIL");
+        
+        if (!storedEmail) {
+          document.getElementById('login-overlay').style.display = 'flex'; document.getElementById('pageLoading').style.display = 'none';
+        } else {
+          document.getElementById('login-overlay').style.display = 'none'; document.getElementById('pageLoading').style.display = 'flex';
+          document.getElementById('loading-msg').innerText = "Đang kiểm tra quyền truy cập...";
+          
+          window.google.script.run.withSuccessHandler(ctx => {
+            document.getElementById('pageLoading').style.display = 'none';
+            if (!ctx.canView && !ctx.canEdit) { document.getElementById('accessDenied').style.display = 'flex'; return; }
+            if (!ctx.canEdit) {
+              const btnUp = document.getElementById('btnTabUpdate'); if(btnUp) btnUp.remove();
+              const divUp = document.getElementById('tab-update'); if(divUp) divUp.remove();
+            }
+            
+            window.CD_CAN_EDIT = ctx.canEdit; 
+            initSearchTable(); 
+            
+            document.getElementById('mainApp').style.opacity = '1';
+            if (ctx.canEdit) { window.google.script.run.withSuccessHandler(ok => { if(!ok) console.log("Drive Access Needed"); }).CD_hasDrivePermission(); }
+          }).withFailureHandler(err => { 
+              document.getElementById('pageLoading').style.display = 'none'; showNotify("Lỗi hệ thống: " + err.message, "error"); 
+          }).CD_getUserContext(storedEmail);
         }
-        
-        window.CD_CAN_EDIT = ctx.canEdit; 
-        initSearchTable(); 
-        
-        document.getElementById('mainApp').style.opacity = '1';
-        if (ctx.canEdit) { google.script.run.withSuccessHandler(ok => { if(!ok) console.log("Drive Access Needed"); }).CD_hasDrivePermission(); }
-      }).withFailureHandler(err => { 
-          document.getElementById('pageLoading').style.display = 'none'; showNotify("Lỗi: " + err.message, "error"); 
-      }).CD_getUserContext(storedEmail);
+    } catch (e) {
+        document.getElementById('pageLoading').style.display = 'none';
+        alert("Có lỗi trong quá trình khởi tạo ứng dụng: " + e.message);
     }
   }
 </script>
