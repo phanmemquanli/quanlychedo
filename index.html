@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Quản lý Lương & Thâm niên - TH Hợp Thành</title>
+  <title>Quản lý Lương & Thâm niên - Trường TH&THCS Hợp Thành</title>
   <base target="_top" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
@@ -131,9 +131,10 @@
 <div id="login-overlay" style="display: none;">
   <div class="login-box">
     <img src="https://i.ibb.co/SXSKh9xM/Logo-m-i-c-a-tr-ng-H-p-Th-Nh.png" class="login-logo">
-    <h2 style="color: #0d6efd; margin-top: 0; text-transform: uppercase; font-size: 24px;">Quản Lý Dữ Liệu</h2>
+    <h2 style="color: #0d6efd; margin-top: 0; text-transform: uppercase; font-size: 24px;">Quản Lý Dữ Liệu chế độ</h2>
     <h3 style="color: #dc3545; margin-bottom: 25px; font-size: 20px;">Lương & Thâm Niên</h3>
-    <p style="font-size: 14px; color: #666; font-style: italic; margin-bottom: 20px;">Hệ thống yêu cầu xác thực bằng Email được cấp quyền</p>
+    <h4 style="color: #dc3545; margin-bottom: 25px; font-size: 20px;">Trường TH&THCS Hợp Thành</h4>
+    <p style="font-size: 14px; color: #666; font-style: italic; margin-bottom: 20px;">Hệ thống yêu cầu xác thực bằng Email đã được cấp quyền</p>
     
     <div id="g_id_onload" data-client_id="376040819369-4snobajf9rcspsq8gqts78sq894kp2l5.apps.googleusercontent.com" data-callback="handleCredentialResponse" data-auto_prompt="false"></div>
     <div style="display: flex; justify-content: center; width: 100%; margin-top: 10px;">
@@ -173,7 +174,7 @@
       <div class="dev-text-box"><span class="dev-role">System Architect</span><span class="dev-name">Hoàng Ngọc Lâm</span></div>
   </div>
   <div class="header">
-    <div style="color:#b91c1c; font-weight:bold; font-size:14px; letter-spacing:1px;">TRƯỜNG TIỂU HỌC HỢP THÀNH</div>
+    <div style="color:#b91c1c; font-weight:bold; font-size:14px; letter-spacing:1px;">TRƯỜNG TH&THCS HỢP THÀNH</div>
     <h1>QUẢN LÝ DỮ LIỆU LƯƠNG & THÂM NIÊN</h1>
   </div>
   <div class="tabs">
@@ -231,9 +232,10 @@
       });
   };
 
-  /* ================= KIỂM TRA GIỚI HẠN DÙNG THỬ Y NHƯ MẪU ================= */
+  /* ================= KIỂM TRA GIỚI HẠN DÙNG THỬ (CHỈ HIỆN 1 LẦN) ================= */
   function checkTrialPeriod() {
-      // Ngày bắt đầu: 16/03/2026 (Tháng đếm từ 0, nên 03 là số 2)
+  //  return true; //Nếu // ở đầy là tiếp tục kiểm tra
+      // Ngày bắt đầu: 16/03/2026
       const trialStartDate = new Date(2026, 2, 16); 
       const trialDays = 14; 
       
@@ -248,34 +250,33 @@
 
       if (!trialModalElement || !btnTrialOk) return true;
 
-      // NẾU ĐÃ QUÁ HẠN DÙNG THỬ
+      // NẾU ĐÃ QUÁ HẠN DÙNG THỬ (Luôn hiện chặn mọi lúc)
       if (today > trialExpiryDate) {
         trialTitle.innerText = "Hết hạn dùng thử";
         trialTitle.style.color = "#dc3545"; 
-        trialMessage.innerHTML = `Thời gian dùng thử ${trialDays} ngày của bạn đã kết thúc.<br>Vui lòng liên hệ Admin (Hoàng Ngọc Lâm) để gia hạn phần mềm.`;
+        trialMessage.innerHTML = `Thời gian dùng thử ${trialDays} ngày của bạn đã kết thúc.<br>Vui lòng liên hệ Admin để gia hạn phần mềm.`;
         
-        // Biến nút Đồng ý thành nút Thoát
         btnTrialOk.innerText = 'Thoát hệ thống';
         btnTrialOk.className = 'btn btn-danger';
+        btnTrialOk.onclick = function() { window.location.href = "https://www.google.com"; };
         
-        btnTrialOk.onclick = function() {
-          window.location.href = "https://www.google.com"; 
-        };
-        
-        // Hiện thông báo khóa màn hình
         trialModalElement.style.display = 'flex';
         
-        // Ẩn tất cả các giao diện làm việc phía sau
         const loginOverlay = document.getElementById('login-overlay');
         if (loginOverlay) loginOverlay.style.display = 'none';
         const mainApp = document.getElementById('mainApp');
         if (mainApp) mainApp.style.display = 'none';
         document.getElementById('pageLoading').style.display = 'none';
         
-        return false; // Chặn hệ thống khởi động tiếp
+        return false; 
       }
       
-      // NẾU VẪN CÒN HẠN
+      // NẾU VẪN CÒN HẠN (Kiểm tra xem đã hiển thị trong phiên này chưa)
+      if (sessionStorage.getItem("TRIAL_SHOWN") === "true") {
+          return true; // Đã xem rồi thì bỏ qua luôn, đi thẳng vào hệ thống
+      }
+
+      // Chưa xem thì hiện thông báo
       const d = trialStartDate.getDate().toString().padStart(2, '0');
       const m = (trialStartDate.getMonth() + 1).toString().padStart(2, '0');
       const y = trialStartDate.getFullYear();
@@ -287,11 +288,12 @@
       btnTrialOk.innerText = 'Đồng ý';
       btnTrialOk.className = 'btn btn-primary';
       btnTrialOk.onclick = function() {
+          sessionStorage.setItem("TRIAL_SHOWN", "true"); // Ghi nhớ đã bấm đồng ý
           trialModalElement.style.display = 'none';
       };
 
       trialModalElement.style.display = 'flex';
-      return true; // Cho phép hệ thống tiếp tục khởi động
+      return true; 
   }
 
   /* --- CÁC HÀM XỬ LÝ CHÍNH KHÁC --- */
@@ -300,11 +302,19 @@
     let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join(''));
     return JSON.parse(jsonPayload);
   }
+  
   function handleCredentialResponse(response) {
       const payload = decodeJwtResponse(response.credential);
-      sessionStorage.setItem("CD_USER_EMAIL", payload.email); location.reload();
+      sessionStorage.setItem("CD_USER_EMAIL", payload.email); 
+      location.reload();
   }
-  function logoutGoogle() { sessionStorage.removeItem("CD_USER_EMAIL"); location.reload(); }
+  
+  function logoutGoogle() { 
+      sessionStorage.removeItem("CD_USER_EMAIL"); 
+      sessionStorage.removeItem("TRIAL_SHOWN"); // Xóa nhớ để nếu đăng nhập lại sẽ hiện thông báo
+      location.reload(); 
+  }
+  
   function showNotify(msg, type='warning') {
       const modal = document.getElementById('notify_modal'); const icon = document.getElementById('notify_icon');
       const title = document.getElementById('notify_title'); const desc = document.getElementById('notify_desc');
