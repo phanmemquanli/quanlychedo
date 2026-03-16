@@ -232,9 +232,8 @@
       });
   };
 
-  /* ================= KIỂM TRA GIỚI HẠN DÙNG THỬ (CHỈ HIỆN 1 LẦN) ================= */
+  /* ================= KIỂM TRA GIỚI HẠN DÙNG THỬ (CHỈ HIỆN 1 LẦN KHI ĐĂNG NHẬP XONG) ================= */
   function checkTrialPeriod() {
-  //  return true; //Nếu // ở đầy là tiếp tục kiểm tra
       // Ngày bắt đầu: 16/03/2026
       const trialStartDate = new Date(2026, 2, 16); 
       const trialDays = 14; 
@@ -484,9 +483,6 @@
   }
 
   function startAppMain() {
-    const isTrialValid = checkTrialPeriod();
-    if (!isTrialValid) return; // Nếu hết hạn thì chặn dừng luôn
-    
     initSearchTable(); const sInputs = ['s_hoten', 's_thang', 's_nam'];
     sInputs.forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener("keyup", function(e) { if(e.key === 'Enter') doSearch(); }); });
     const storedEmail = sessionStorage.getItem("CD_USER_EMAIL");
@@ -503,6 +499,11 @@
           const btnUp = document.getElementById('btnTabUpdate'); if(btnUp) btnUp.remove();
           const divUp = document.getElementById('tab-update'); if(divUp) divUp.remove();
         }
+        
+        // --- [SỬA LỖI Ở ĐÂY] KIỂM TRA HẾT HẠN SAU KHI ĐĂNG NHẬP VÀ LOAD DỮ LIỆU XONG ---
+        const isTrialValid = checkTrialPeriod();
+        if (!isTrialValid) return; // Nếu hết hạn thì chặn dừng luôn
+
         document.getElementById('mainApp').style.opacity = '1';
         if (ctx.canEdit) { google.script.run.withSuccessHandler(ok => { if(!ok) console.log("Drive Access Needed"); }).CD_hasDrivePermission(); }
       }).withFailureHandler(err => { 
