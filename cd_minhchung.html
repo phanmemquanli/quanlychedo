@@ -174,7 +174,11 @@
   function handleUpResult(res, st, btn) {
     if (res.success) {
       st.style.color = "green"; st.innerText = "✅ " + res.message;
-      if (UPLOAD_SUCCESS_CALLBACK) { UPLOAD_SUCCESS_CALLBACK(res.fileUrl, CURR_FILES[0].name); }
+      if (UPLOAD_SUCCESS_CALLBACK) { 
+          // [CẬP NHẬT LỚN]: Trả về Mode ghi (wMode) để Index biết đường nối Link hay Đè Link
+          const wMode = document.querySelector('input[name="writeMode"]:checked').value;
+          UPLOAD_SUCCESS_CALLBACK(res.fileUrl, CURR_FILES[0].name, wMode); 
+      }
       setTimeout(closeUploadModal, 1000); 
     } else {
       st.style.color = "red"; st.innerText = "❌ " + res.message; btn.classList.add('active');
