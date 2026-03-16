@@ -9,33 +9,33 @@
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuvwPLKjGmcxqtwsur2h9GLJMsG0vayOcnTxgeiaZT0shYWhaj6dO__WGmGKV93HE3/exec";
 
-    // Khởi tạo an toàn, tránh xung đột với thư viện đăng nhập Google
-    window.google = window.google || {};
-    window.google.script = {
-      run: {
-        withSuccessHandler: function(handler) { this._successHandler = handler; return this; },
-        withFailureHandler: function(handler) { this._failureHandler = handler; return this; },
-        _callServer: function(funcName, args) {
-          const success = this._successHandler; const failure = this._failureHandler;
-          this._successHandler = null; this._failureHandler = null;
-          const userEmail = sessionStorage.getItem("CD_USER_EMAIL") || "";
+    const google = {
+      script: {
+        run: {
+          withSuccessHandler: function(handler) { this._successHandler = handler; return this; },
+          withFailureHandler: function(handler) { this._failureHandler = handler; return this; },
+          _callServer: function(funcName, args) {
+            const success = this._successHandler; const failure = this._failureHandler;
+            this._successHandler = null; this._failureHandler = null;
+            const userEmail = sessionStorage.getItem("CD_USER_EMAIL") || "";
 
-          fetch(SCRIPT_URL, {
-            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ functionName: funcName, args: args, email: userEmail })
-          })
-          .then(res => res.json())
-          .then(res => {
-            if (res.error) { if (failure) failure(new Error(res.error)); else console.error(res.error); } 
-            else { if (success) success(res.data); }
-          })
-          .catch(err => { if (failure) failure(err); else console.error(err); });
+            fetch(SCRIPT_URL, {
+              method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({ functionName: funcName, args: args, email: userEmail })
+            })
+            .then(res => res.json())
+            .then(res => {
+              if (res.error) { if (failure) failure(new Error(res.error)); else console.error(res.error); } 
+              else { if (success) success(res.data); }
+            })
+            .catch(err => { if (failure) failure(err); else console.error(err); });
+          }
         }
       }
     };
 
     ['CD_getSubFolders', 'CD_uploadMultipleFilesToDrive', 'CD_uploadFolderEvidence', 'CD_deleteEvidence', 'CD_doBatchUpdate', 'CD_updateRecord', 'CD_searchLuong', 'CD_searchThamNien', 'CD_getUserContext', 'CD_hasDrivePermission'].forEach(func => {
-      window.google.script.run[func] = function(...args) { this._callServer(func, args); };
+      google.script.run[func] = function(...args) { this._callServer(func, args); };
     });
   </script>
 
@@ -166,7 +166,7 @@
    <div class="msg-box">
       <span id="notify_icon" class="msg-icon">⚠️</span><h2 id="notify_title" class="msg-title">Thông báo</h2>
       <div id="notify_desc" class="msg-desc">Nội dung...</div>
-      <button class="btn btn-primary" onclick="closeNotify()" style="width:100px;">Đóng</button>
+      <button class="btn btn-primary" onclick="closeNotify()" style="width:100px; justify-content: center;">Đóng</button>
    </div>
 </div>
 
@@ -220,7 +220,6 @@
 <script>
   window.CD_CAN_EDIT = false; 
 
-  // [ĐÃ SỬA LỖI TREO KHI LOAD] Dùng DOMContentLoaded thay vì window.onload để ứng dụng khởi động ngay
   document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('pageLoading').style.display = 'flex';
     
@@ -241,12 +240,11 @@
         startAppMain();
       }).catch(err => {
         console.error("Lỗi tải cd_minhchung.html:", err);
-        // Khởi chạy App ngay cả khi file minh chứng lỗi
         startAppMain();
       });
   });
 
-  /* ================= KIỂM TRA GIỚI HẠN THỜI GIAN SỬ DỤNG 14 NGÀY THEO FILE GỐC ================= */
+  /* ================= KIỂM TRA GIỚI HẠN THỜI GIAN SỬ DỤNG 14 NGÀY ================= */
   const NGAY_BAT_DAU = new Date("2026-03-16"); 
   const SO_NGAY_GIOI_HAN = 14;
 
@@ -264,7 +262,7 @@
           const mainApp = document.getElementById('mainApp');
           if (mainApp) mainApp.style.display = 'none';
           
-          document.getElementById('pageLoading').style.display = 'none'; // Ẩn loading quay vòng
+          document.getElementById('pageLoading').style.display = 'none';
           return true;
       }
       return false; 
