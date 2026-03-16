@@ -73,6 +73,11 @@
     LINK_CAN_XOA = linkHienTai || "";
     UPLOAD_SUCCESS_CALLBACK = onSuccess;
     updateWarnDisplay();
+    
+    // [ĐÃ SỬA LỖI]: Luôn gọi hàm tải thư mục khi Form Upload được mở lên
+    document.getElementById('folderSelect').innerHTML = '<option>⏳ Đang quét...</option>';
+    loadFolders();
+    
     document.getElementById('upload_modal').style.display = 'flex';
   }
 
@@ -175,7 +180,6 @@
     if (res.success) {
       st.style.color = "green"; st.innerText = "✅ " + res.message;
       if (UPLOAD_SUCCESS_CALLBACK) { 
-          // [CẬP NHẬT LỚN]: Trả về Mode ghi (wMode) để Index biết đường nối Link hay Đè Link
           const wMode = document.querySelector('input[name="writeMode"]:checked').value;
           UPLOAD_SUCCESS_CALLBACK(res.fileUrl, CURR_FILES[0].name, wMode); 
       }
