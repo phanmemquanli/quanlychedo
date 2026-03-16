@@ -9,33 +9,33 @@
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuvwPLKjGmcxqtwsur2h9GLJMsG0vayOcnTxgeiaZT0shYWhaj6dO__WGmGKV93HE3/exec";
 
-    const google = {
-      script: {
-        run: {
-          withSuccessHandler: function(handler) { this._successHandler = handler; return this; },
-          withFailureHandler: function(handler) { this._failureHandler = handler; return this; },
-          _callServer: function(funcName, args) {
-            const success = this._successHandler; const failure = this._failureHandler;
-            this._successHandler = null; this._failureHandler = null;
-            const userEmail = sessionStorage.getItem("CD_USER_EMAIL") || "";
+    // Khởi tạo an toàn, tránh xung đột với thư viện đăng nhập Google
+    window.google = window.google || {};
+    window.google.script = {
+      run: {
+        withSuccessHandler: function(handler) { this._successHandler = handler; return this; },
+        withFailureHandler: function(handler) { this._failureHandler = handler; return this; },
+        _callServer: function(funcName, args) {
+          const success = this._successHandler; const failure = this._failureHandler;
+          this._successHandler = null; this._failureHandler = null;
+          const userEmail = sessionStorage.getItem("CD_USER_EMAIL") || "";
 
-            fetch(SCRIPT_URL, {
-              method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-              body: JSON.stringify({ functionName: funcName, args: args, email: userEmail })
-            })
-            .then(res => res.json())
-            .then(res => {
-              if (res.error) { if (failure) failure(new Error(res.error)); else console.error(res.error); } 
-              else { if (success) success(res.data); }
-            })
-            .catch(err => { if (failure) failure(err); else console.error(err); });
-          }
+          fetch(SCRIPT_URL, {
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ functionName: funcName, args: args, email: userEmail })
+          })
+          .then(res => res.json())
+          .then(res => {
+            if (res.error) { if (failure) failure(new Error(res.error)); else console.error(res.error); } 
+            else { if (success) success(res.data); }
+          })
+          .catch(err => { if (failure) failure(err); else console.error(err); });
         }
       }
     };
 
     ['CD_getSubFolders', 'CD_uploadMultipleFilesToDrive', 'CD_uploadFolderEvidence', 'CD_deleteEvidence', 'CD_doBatchUpdate', 'CD_updateRecord', 'CD_searchLuong', 'CD_searchThamNien', 'CD_getUserContext', 'CD_hasDrivePermission'].forEach(func => {
-      google.script.run[func] = function(...args) { this._callServer(func, args); };
+      window.google.script.run[func] = function(...args) { this._callServer(func, args); };
     });
   </script>
 
@@ -123,8 +123,8 @@
       <div class="np-body">
          <p class="np-msg">Hệ thống đã vượt quá thời gian sử dụng <b>14 ngày</b>.<br><br>Vui lòng liên hệ nhà phát triển để được hỗ trợ gia hạn.</p>
          <div style="font-size: 15px; font-weight: bold; color: #1e3a8a; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;">
-             Tác giả: HOÀNG NGỌC LÂM<br>
-             Đơn vị: Trường TH Hợp Thành
+             Phát triển: HOÀNG NGỌC LÂM<br>
+             Trường TH&THCS Hợp Thành
          </div>
       </div>
    </div>
@@ -166,7 +166,7 @@
    <div class="msg-box">
       <span id="notify_icon" class="msg-icon">⚠️</span><h2 id="notify_title" class="msg-title">Thông báo</h2>
       <div id="notify_desc" class="msg-desc">Nội dung...</div>
-      <button class="btn btn-primary" onclick="closeNotify()" style="width:100px; justify-content: center;">Đóng</button>
+      <button class="btn btn-primary" onclick="closeNotify()" style="width:100px; justify-content: center; margin: 0 auto;">Đóng</button>
    </div>
 </div>
 
@@ -183,7 +183,7 @@
   
   <div class="tabs">
     <button class="tab-btn active" id="btnTabSearch" onclick="switchTab('search')">TRA CỨU DỮ LIỆU</button>
-    <button class="tab-btn" id="btnTabUpdate" onclick="switchTab('update')">CẬP NHẬT CHẾ ĐỘ</button>
+    <button class="tab-btn" id="btnTabUpdate" onclick="switchTab('update')">CẬP CHẾ ĐỘ</button>
     <button class="tab-btn btn-logout" onclick="logoutGoogle()" title="Đăng xuất tài khoản">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/><path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/></svg> Đăng xuất
     </button>
@@ -244,11 +244,11 @@
       });
   });
 
-  /* ================= KIỂM TRA GIỚI HẠN THỜI GIAN SỬ DỤNG 14 NGÀY ================= */
   const NGAY_BAT_DAU = new Date("2026-03-16"); 
   const SO_NGAY_GIOI_HAN = 14;
 
   function kiemTraHetHan() {
+    return true; //Nếu muốn hoạt động trở lại thì để // ở đầu dòng này
       const homNay = new Date();
       const thoiGianDaQua = homNay.getTime() - NGAY_BAT_DAU.getTime();
       const soNgayDaQua = Math.floor(thoiGianDaQua / (1000 * 3600 * 24));
@@ -262,13 +262,12 @@
           const mainApp = document.getElementById('mainApp');
           if (mainApp) mainApp.style.display = 'none';
           
-          document.getElementById('pageLoading').style.display = 'none';
+          document.getElementById('pageLoading').style.display = 'none'; 
           return true;
       }
       return false; 
   }
 
-  /* --- CÁC HÀM XỬ LÝ CHÍNH KHÁC --- */
   function decodeJwtResponse(token) {
     let base64Url = token.split('.')[1]; let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join(''));
