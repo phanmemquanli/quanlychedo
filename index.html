@@ -20,8 +20,7 @@
             const userEmail = sessionStorage.getItem("CD_USER_EMAIL") || "";
 
             fetch(SCRIPT_URL, {
-              method: "POST",
-              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
               body: JSON.stringify({ functionName: funcName, args: args, email: userEmail })
             })
             .then(res => res.json())
@@ -35,14 +34,13 @@
       }
     };
 
-    // Bổ sung thêm hàm 'CD_updateRecord' vào danh sách kết nối
     ['CD_getSubFolders', 'CD_uploadMultipleFilesToDrive', 'CD_uploadFolderEvidence', 'CD_deleteEvidence', 'CD_doBatchUpdate', 'CD_updateRecord', 'CD_searchLuong', 'CD_searchThamNien', 'CD_getUserContext', 'CD_hasDrivePermission'].forEach(func => {
       google.script.run[func] = function(...args) { this._callServer(func, args); };
     });
   </script>
 
   <style>
-    /* TOÀN BỘ CSS GIỮ NGUYÊN CỦA THẦY */
+    /* TOÀN BỘ CSS GIỮ NGUYÊN */
     :root { --primary: #1e3a8a; --bg: #f9fafb; --white: #ffffff; --border: #d1d5db; --red: #dc2626; --green: #059669; --orange: #d97706; }
     body { font-family: "Times New Roman", serif; background: var(--bg); margin: 0; padding: 0; color: #1f2937; font-size: 15px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
     .dev-info-badge { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: row; align-items: center; gap: 12px; padding: 6px 12px 6px 8px; background: rgba(255, 255, 255, 0.95); border-radius: 30px; border: double 1px transparent; background-image: linear-gradient(white, white), linear-gradient(135deg, var(--primary), #3b82f6); background-origin: border-box; background-clip: padding-box, border-box; box-shadow: 0 4px 15px rgba(30, 58, 138, 0.1); backdrop-filter: blur(8px); z-index: 1000; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
@@ -82,7 +80,6 @@
     .mini-btn { cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 13px; border: 1px solid #bae6fd; display: inline-block; margin-left: 2px; }
     .mini-up-btn { background: #e0f2fe; color: #0284c7; } .mini-up-btn:hover { background: #bae6fd; }
     .mini-del-btn { background: #fee2e2; color: #dc2626; border-color: #fecaca; display: none; } .mini-del-btn:hover { background: #fecaca; }
-    .view-link { display: none; margin-left: 5px; text-decoration: none; cursor: pointer; font-size: 16px; color: #1e3a8a; }
     .hidden { display: none !important; }
     .status-msg { margin-left: 10px; font-weight: bold; }
     .text-loading { color: var(--orange); } .text-success { color: var(--green); } .text-error { color: var(--red); }
@@ -217,9 +214,8 @@
 </div>
 
 <script>
-  window.CD_CAN_EDIT = false; // Biến lưu quyền chỉnh sửa
+  window.CD_CAN_EDIT = false; 
 
-  /* --- KẾT NỐI: TẢI GIAO DIỆN MINH CHỨNG --- */
   window.onload = function() {
     document.getElementById('pageLoading').style.display = 'flex';
     fetch('cd_minhchung.html')
@@ -240,12 +236,8 @@
       });
   };
 
-  /* ================= KIỂM TRA GIỚI HẠN DÙNG THỬ ================= */
-  function checkTrialPeriod() {
-      return true; // Vô hiệu hóa bảng thông báo theo yêu cầu lần trước
-  }
+  function checkTrialPeriod() { return true; }
 
-  /* --- CÁC HÀM XỬ LÝ CHÍNH KHÁC --- */
   function decodeJwtResponse(token) {
     let base64Url = token.split('.')[1]; let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join(''));
@@ -280,13 +272,13 @@
       { id:'mangach', name:'Mã ngạch', w:'70px' }, { id:'bachh', name:'Bậc', w:'50px' }, { id:'hshh', name:'Hệ số', w:'50px' },
       { id:'ngayhh', name:'Ngày Hưởng', w:'100px', type:'date' },
       { id:'bacn', name:'Bậc N', w:'50px' }, { id:'hsn', name:'Hệ số N', w:'50px' }, { id:'ngayn', name:'Ngày Nâng', w:'100px', type:'date' },
-      { id:'soqd', name:'Số Quyết định', w:'150px', type:'qd' }, { id:'ngayct', name:'Ngày CT', w:'90px' }
+      { id:'soqd', name:'Số Quyết định', w:'180px', type:'qd' }, { id:'ngayct', name:'Ngày CT', w:'90px' }
     ],
     THAMNIEN: [
       { id:'del', name:'Xóa', w:'40px', type:'del' }, { id:'hoten', name:'Họ và tên', w:'160px', align:'left' },
       { id:'tlhh', name:'TL% HieH', w:'70px' }, { id:'ngayhh', name:'Ngày Hưởng', w:'100px', type:'date' },
       { id:'tln', name:'TL% Nâng', w:'70px' }, { id:'ngayn', name:'Ngày Nâng', w:'100px', type:'date' },
-      { id:'soqd', name:'Số Quyết định', w:'150px', type:'qd' }
+      { id:'soqd', name:'Số Quyết định', w:'180px', type:'qd' }
     ]
   };
 
@@ -301,7 +293,6 @@
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-search').classList.add('hidden'); document.getElementById('tab-update').classList.add('hidden');
     
-    // Đặt lại trạng thái nếu đang chuyển tab
     document.getElementById('EDIT_ROW_INDEX').value = "";
     document.getElementById('btn_addRow').style.display = 'inline-flex';
 
@@ -320,19 +311,25 @@
     thead.innerHTML = hHtml; tbody.innerHTML = ''; addRow();
   }
 
+  // --- CẬP NHẬT GIAO DIỆN CỘT QUYẾT ĐỊNH ĐỂ HIỆN SỐ LƯỢNG QĐ ---
   function addRow() {
     const type = document.getElementById('u_comboLoai').value; const cols = CONFIG[type]; const tbody = document.getElementById('u_tbody');
     const tr = document.createElement('tr'); tr.className = 'data-row'; let html = '<td class="stt-cell"></td>';
     cols.forEach(c => {
       if (c.type === 'del') { html += `<td><button class="btn btn-danger" onclick="removeRow(this)" style="padding:2px 8px;">×</button></td>`; } 
       else if (c.type === 'qd') {
-        html += `<td><div style="display:flex; gap:2px; align-items:center;">
-                <input class="cell-input" data-key="${c.id}" placeholder="Số QĐ..." style="flex:1;">
-                <span class="mini-btn mini-up-btn" onclick="triggerUpload(this)" title="Đính kèm">📁</span>
-                <span class="mini-btn mini-del-btn" onclick="deleteFileInRow(this)" title="Xóa file">❌</span>
-                <a class="view-link" target="_blank" title="Xem ngay">👁️</a>
-                <input type="hidden" data-key="${c.id}Link"><input type="hidden" data-key="${c.id}Text">
-            </div></td>`;
+        html += `<td>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+                <div style="display:flex; gap:2px; align-items:center;">
+                    <input class="cell-input" data-key="${c.id}" placeholder="Số QĐ/Tên file..." style="flex:1;">
+                    <span class="mini-btn mini-up-btn" onclick="triggerUpload(this)" title="Đính kèm">📁</span>
+                    <span class="mini-btn mini-del-btn" onclick="deleteFileInRow(this)" title="Xóa file">❌</span>
+                    <input type="hidden" data-key="${c.id}Link">
+                    <input type="hidden" data-key="${c.id}Text">
+                </div>
+                <div class="dynamic-links" style="display:flex; flex-wrap:wrap; gap:3px; justify-content:center;"></div>
+            </div>
+        </td>`;
       } else if (c.type === 'date') { html += `<td><input class="cell-input" data-key="${c.id}" placeholder="dd/mm/yyyy" maxlength="10" oninput="autoFormatDate(this)" style="width:${c.w||'100%'}"></td>`; } 
       else { html += `<td><input class="cell-input ${c.align||'center'}" data-key="${c.id}" style="width:${c.w||'100%'}" placeholder="..."></td>`; }
     });
@@ -349,7 +346,7 @@
     const loai = document.getElementById('s_comboLoai').value; 
     const thead = document.getElementById('s_thead'); 
     let h = '<tr>';
-    if (window.CD_CAN_EDIT) h += '<th>Sửa</th>'; // Hiện cột Sửa nếu có quyền
+    if (window.CD_CAN_EDIT) h += '<th>Sửa</th>'; 
     h += '<th>STT</th>';
     
     if (loai === 'LUONG') { h += `<th class="text-left">Họ tên</th><th>Mã</th><th>Bậc</th><th>Hệ số</th><th>Ngày Hưởng</th><th>Bậc Nâng</th><th>HS Nâng</th><th>Ngày Nâng</th><th>Số Quyết định</th><th>Ngày CT</th></tr>`; } 
@@ -370,7 +367,6 @@
         let linkDisplay = ""; 
         let qdText = "";
         
-        // Render Tên QĐ và Link QĐ theo chuẩn mảng (Chia nhiều link QĐ1, QĐ2...)
         if (typeof qdObj === 'object' && qdObj !== null) {
             qdText = qdObj.text || "";
             let linkStr = qdObj.link || "";
@@ -390,7 +386,6 @@
             } else { linkDisplay = str; }
         }
 
-        // Hiện nút Edit nếu có quyền
         let htmlSua = "";
         if (window.CD_CAN_EDIT) {
              const rowDataEncoded = encodeURIComponent(JSON.stringify(r));
@@ -411,25 +406,21 @@
     [loai === 'LUONG' ? 'CD_searchLuong' : 'CD_searchThamNien'](boLoc); 
   }
 
-  // --- CHUYỂN DỮ LIỆU SANG TAB CẬP NHẬT ĐỂ SỬA ---
   function transferToEdit(dataEncoded, loai) {
       const r = JSON.parse(decodeURIComponent(dataEncoded));
       document.getElementById('u_comboLoai').value = loai;
       renderInputTableStructure();
       
-      // Chuyển Tab
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('tab-search').classList.add('hidden'); 
       document.getElementById('tab-update').classList.add('hidden');
       document.getElementById('btnTabUpdate').classList.add('active'); 
       document.getElementById('tab-update').classList.remove('hidden');
 
-      // Ẩn nút Thêm dòng và gắn cờ RowIndex
       const rowIndex = loai === 'LUONG' ? r[16] : r[12];
       document.getElementById('EDIT_ROW_INDEX').value = rowIndex; 
       document.getElementById('btn_addRow').style.display = 'none';
 
-      // Điền dữ liệu vào input
       const tr = document.querySelector('#u_tbody .data-row');
       const inputs = tr.querySelectorAll('input');
       
@@ -446,14 +437,13 @@
               if(k==='tln') inp.value = r[7]; if(k==='ngayn') inp.value = formatD(r[8],r[9],r[10]);
               if(k==='soqd') inp.value = r[11].text || ""; if(k==='soqdLink') inp.value = r[11].link || ""; if(k==='soqdText') inp.value = r[11].text || "";
           }
-          // Bật hiển thị icon Link nếu đã có link
           if (k==='soqdLink' && inp.value) {
-               const div = inp.closest('div');
-               if(div) {
-                   const btnUp = div.querySelector('.mini-up-btn'); const btnDel = div.querySelector('.mini-del-btn'); const vLink = div.querySelector('.view-link');
+               const cell = inp.closest('td');
+               if(cell) {
+                   const btnUp = cell.querySelector('.mini-up-btn'); const btnDel = cell.querySelector('.mini-del-btn');
                    if(btnUp) { btnUp.innerText = "✅"; btnUp.style.color = "green"; }
                    if(btnDel) btnDel.style.display = "inline-block";
-                   if(vLink) { vLink.style.display = "inline"; vLink.href = inp.value.split(',')[0]; } // Hiển thị link đầu
+                   renderDynamicLinks(cell); // Sinh nút QĐ1, QĐ2 khi chuyển qua
                }
           }
       });
@@ -491,7 +481,6 @@
     const editRowIndex = document.getElementById('EDIT_ROW_INDEX').value;
     status.className = 'status-msg text-loading'; status.innerText = `⏳ Đang lưu...`;
 
-    // GỌI API: Cập nhật 1 dòng hoặc Thêm mới
     if (editRowIndex) {
          google.script.run.withSuccessHandler(res => {
             status.className = 'status-msg text-success'; status.innerText = "✅ " + res;
@@ -512,14 +501,27 @@
     }
   }
 
+  // --- HÀM VẼ GIAO DIỆN QĐ1, QĐ2 ---
+  function renderDynamicLinks(rowCell) {
+      const linkInput = rowCell.querySelector('input[data-key="soqdLink"]');
+      const container = rowCell.querySelector('.dynamic-links');
+      if(!container || !linkInput) return;
+      container.innerHTML = '';
+      const urls = linkInput.value.split(',').map(u => u.trim()).filter(u => u);
+      if(urls.length > 0) {
+          container.innerHTML = urls.map((u, idx) => `<a href="${u}" target="_blank" style="text-decoration:none; background:#e0f2fe; border:1px solid #bae6fd; padding:2px 5px; border-radius:3px; font-size:12px; font-weight:bold; color:#0369a1;" title="Xem QĐ ${idx+1}">QĐ${idx+1}</a>`).join('');
+      }
+  }
+
   function triggerUpload(btn) {
-    const row = btn.closest('div'); const linkInput = row.querySelector('input[data-key="soqdLink"]');
-    const textInput = row.querySelector('input[data-key="soqd"]'); const viewLink = row.querySelector('.view-link');
-    const delBtn = row.querySelector('.mini-del-btn'); const oldUrl = linkInput ? linkInput.value : "";
+    const rowCell = btn.closest('td'); 
+    const linkInput = rowCell.querySelector('input[data-key="soqdLink"]');
+    const textInput = rowCell.querySelector('input[data-key="soqd"]'); 
+    const delBtn = rowCell.querySelector('.mini-del-btn'); 
+    const oldUrl = linkInput ? linkInput.value : "";
     
     if(typeof openUploadModal === 'function') {
         openUploadModal(oldUrl, function(fileUrl, fileName, wMode) {
-            // PHÂN BIỆT THAY THẾ VÀ CHÈN THÊM
             if (wMode === 'append' && linkInput.value.trim() !== "") {
                 linkInput.value += "," + fileUrl;
                 textInput.value += ", " + fileName;
@@ -528,28 +530,38 @@
                 textInput.value = fileName;
             }
             btn.innerText = "✅"; btn.style.color = "green"; 
-            if (viewLink) { viewLink.style.display = "inline"; viewLink.href = linkInput.value.split(',')[0]; } 
             if (delBtn) delBtn.style.display = "inline-block";
+            renderDynamicLinks(rowCell); // Cập nhật lại giao diện các nút QĐ
         });
     } else { alert("Chưa kết nối được với file Upload Minh Chứng!"); }
   }
 
   function deleteFileInRow(btn) {
       if(!confirm("Bạn có chắc chắn muốn xóa file đính kèm này trên Drive không?")) return;
-      const row = btn.closest('div'); const linkInput = row.querySelector('input[data-key="soqdLink"]');
+      const rowCell = btn.closest('td'); 
+      const linkInput = rowCell.querySelector('input[data-key="soqdLink"]');
       const url = linkInput ? linkInput.value : "";
-      if(!url) { resetRowFileUI(row); return; }
+      if(!url) { resetRowFileUI(rowCell); return; }
+      
       btn.innerText = "⏳";
       google.script.run.withSuccessHandler(res => {
-          if(res.success) { resetRowFileUI(row); showNotify("Đã xóa file vĩnh viễn trên Drive!", "success"); } else { btn.innerText = "❌"; showNotify("Lỗi: " + res.message, "error"); }
+          if(res.success) { resetRowFileUI(rowCell); showNotify("Đã xóa file vĩnh viễn trên Drive!", "success"); } 
+          else { btn.innerText = "❌"; showNotify("Lỗi: " + res.message, "error"); }
       }).CD_deleteEvidence(url);
   }
 
-  function resetRowFileUI(rowDiv) {
-      const linkInput = rowDiv.querySelector('input[data-key="soqdLink"]'); const upBtn = rowDiv.querySelector('.mini-up-btn');
-      const viewLink = rowDiv.querySelector('.view-link'); const delBtn = rowDiv.querySelector('.mini-del-btn');
-      if(linkInput) linkInput.value = ""; if(upBtn) { upBtn.innerText = "📁"; upBtn.style.color = "#0284c7"; }
-      if(viewLink) { viewLink.style.display = "none"; viewLink.href = "#"; } if(delBtn) { delBtn.style.display = "none"; delBtn.innerText = "❌"; }
+  function resetRowFileUI(rowCell) {
+      const linkInput = rowCell.querySelector('input[data-key="soqdLink"]'); 
+      const textInput = rowCell.querySelector('input[data-key="soqd"]');
+      const upBtn = rowCell.querySelector('.mini-up-btn');
+      const delBtn = rowCell.querySelector('.mini-del-btn');
+      const container = rowCell.querySelector('.dynamic-links');
+      
+      if(linkInput) linkInput.value = ""; 
+      if(textInput) textInput.value = "";
+      if(upBtn) { upBtn.innerText = "📁"; upBtn.style.color = "#0284c7"; }
+      if(delBtn) { delBtn.style.display = "none"; delBtn.innerText = "❌"; }
+      if(container) container.innerHTML = '';
   }
 
   function startAppMain() {
@@ -573,8 +585,8 @@
           const divUp = document.getElementById('tab-update'); if(divUp) divUp.remove();
         }
         
-        window.CD_CAN_EDIT = ctx.canEdit; // Lưu cờ quyền
-        initSearchTable(); // Khởi tạo lại bảng để hiển thị cột Sửa nếu có quyền
+        window.CD_CAN_EDIT = ctx.canEdit; 
+        initSearchTable(); 
         
         document.getElementById('mainApp').style.opacity = '1';
         if (ctx.canEdit) { google.script.run.withSuccessHandler(ok => { if(!ok) console.log("Drive Access Needed"); }).CD_hasDrivePermission(); }
