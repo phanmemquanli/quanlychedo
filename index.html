@@ -72,7 +72,6 @@
     .table-responsive { overflow: auto; border: 1px solid var(--border); background: #fff; border-radius: 6px; flex-grow: 1; position: relative; }
     table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1000px; font-size: 15px; }
     
-    /* ĐÃ CẬP NHẬT: THÊM TEXT-ALIGN CENTER VÀ VERTICAL-ALIGN MIDDLE ĐỂ ÉP CĂN GIỮA TIÊU ĐỀ */
     th { background: #eff6ff; color: var(--primary); padding: 10px 6px; border-bottom: 2px solid #b1b8c2; border-right: 1px solid #e5e7eb; white-space: nowrap; font-weight: bold; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1); text-align: center !important; vertical-align: middle !important; }
     
     td { border-bottom: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; padding: 6px; text-align: center; vertical-align: middle; }
@@ -103,6 +102,17 @@
     .loading-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; background: linear-gradient(45deg, #0d6efd, #6610f2, #dc3545, #0d6efd); background-size: 300% 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: gradientMove 3s ease infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    
+    /* TRÌNH BÀY NHƯ BAN ĐẦU CỦA BOX THÔNG BÁO HẠN CHẾ QUYỀN TRUY CẬP */
+    .no-perm-box { background: #fff; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); width: 500px; max-width: 95%; overflow: hidden; font-family: "Times New Roman", serif; text-align: center; position: relative; }
+    .np-header { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 30px 20px; }
+    .np-icon { font-size: 50px; margin-bottom: 10px; display: block; animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+    .np-title { font-size: 22px; margin: 0; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+    .np-body { padding: 30px 20px; }
+    .np-msg { font-size: 16px; color: #4b5563; margin-bottom: 25px; line-height: 1.6; }
+    .np-btn { display: inline-block; background: #1e3a8a; color: white; border: none; cursor: pointer; padding: 12px 30px; border-radius: 30px; font-weight: bold; transition: all 0.3s; box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3); font-family: "Times New Roman", serif; font-size: 15px; }
+    .np-btn:hover { transform: scale(1.05); background: #1e40af; box-shadow: 0 6px 20px rgba(30, 58, 138, 0.4); }
   </style>
 </head>
 <body>
@@ -145,10 +155,10 @@
 
 <div id="accessDenied" class="overlay-screen" style="display:none; background: #f3f4f6;">
    <div class="no-perm-box">
-      <div class="np-header" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 30px 20px; border-radius: 16px 16px 0 0;"><span class="np-icon" style="font-size: 50px; margin-bottom: 10px; display: block; animation: float 3s ease-in-out infinite;">🔒</span><h2 class="np-title" style="font-size: 22px; margin: 0; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Hạn chế Quyền Truy Cập</h2></div>
-      <div class="np-body" style="padding: 30px 20px;">
-         <p class="np-msg" style="font-size: 16px; color: #4b5563; margin-bottom: 25px; line-height: 1.6;">Xin chào!<br>Tài khoản của bạn hiện chưa được cấp quyền truy cập.<br><br>Vui lòng liên hệ Admin hoặc Đăng xuất thử tài khoản khác.</p>
-         <button class="np-btn" style="display: inline-block; background: #1e3a8a; color: white; border: none; cursor: pointer; padding: 12px 30px; border-radius: 30px; font-weight: bold; transition: all 0.3s; box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3); font-family: 'Times New Roman', serif; font-size: 15px;" onclick="logoutGoogle()">🔄 Đăng xuất</button>
+      <div class="np-header"><span class="np-icon">🔒</span><h2 class="np-title">Hạn chế Quyền Truy Cập</h2></div>
+      <div class="np-body">
+         <p class="np-msg">Xin chào!<br>Tài khoản của bạn hiện chưa được cấp quyền truy cập.<br><br>Vui lòng liên hệ Admin hoặc Đăng xuất thử tài khoản khác.</p>
+         <button class="np-btn" onclick="logoutGoogle()">🔄 Đăng xuất</button>
       </div>
    </div>
 </div>
@@ -242,9 +252,8 @@
       });
   });
 
-  // --- LOGIC KIỂM TRA BẢN QUYỀN (TRIAL PERIOD) ---
   function checkTrialPeriod() {
-     // return true; // <-- BỎ DẤU CHÉO (//) Ở ĐẦU DÒNG NÀY NẾU THẦY MUỐN TẮT TÍNH NĂNG GIỚI HẠN THỜI GIAN
+     // return true; // <-- BỎ DẤU CHÉO (//) Ở ĐẦU DÒNG NÀY NẾU MUỐN TẮT TÍNH NĂNG GIỚI HẠN THỜI GIAN
 
     const trialStartDate = new Date(2026, 1, 7); // Ngày 07/02/2026
     const trialDays = 14;
@@ -300,7 +309,6 @@
     return true;
   }
 
-  // --- CẬP NHẬT: TẢI TRANG KHÔNG BỊ CHẶN BỞI THÔNG BÁO ---
   window.onload = function() {
     const storedEmail = sessionStorage.getItem("CD_USER_EMAIL");
     if(storedEmail) {
