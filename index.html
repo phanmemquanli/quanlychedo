@@ -116,16 +116,18 @@
 <div id="minhchung-container"></div>
 
 <div class="modal fade" id="trialModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" style="z-index: 9999999;">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content text-center p-4 border-0 shadow-lg" style="background: rgba(255, 255, 255, 0.95);">
-      <div class="mb-4 mt-2">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" width="120">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+    <div class="modal-content text-center border-0 shadow-lg" style="background: #ffffff; border-radius: 12px; padding: 25px 20px;">
+      <div class="mb-3 d-flex justify-content-center">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" width="110">
       </div>
-      <h5 class="fw-bold mb-3" style="font-family: 'Segoe UI', sans-serif;" id="trialTitle">Thông báo dùng thử</h5>
-      <p class="fs-5 text-secondary" style="font-family: 'Segoe UI', sans-serif;" id="trialMessage">
-        Bạn đang trong thời gian dùng thử 14 ngày. Ngày bắt đầu: 07/02/2026.
+      <h4 class="fw-bold mb-3" style="font-family: 'Times New Roman', serif; color: #dc2626;" id="trialTitle">Hết hạn dùng thử</h4>
+      <p class="text-secondary mb-4" style="font-family: 'Times New Roman', serif; font-size: 16px; line-height: 1.5;" id="trialMessage">
+        Thời gian dùng thử 14 ngày của bạn đã kết thúc.<br>Vui lòng liên hệ Admin để gia hạn phần mềm.
       </p>
-      <button type="button" id="btnTrialOk" class="btn btn-primary px-5 mt-3 fw-bold" data-bs-dismiss="modal">Đồng ý</button>
+      <div class="d-flex justify-content-center">
+        <button type="button" id="btnTrialOk" class="btn btn-danger fw-bold" style="padding: 8px 30px; font-size: 15px; border-radius: 6px; text-align: center;" data-bs-dismiss="modal">Thoát hệ thống</button>
+      </div>
     </div>
   </div>
 </div>
@@ -246,9 +248,9 @@
       });
   });
 
-  // --- BỔ SUNG: LOGIC KIỂM TRA BẢN QUYỀN (TRIAL PERIOD) ---
+  // --- BỔ SUNG: LOGIC KIỂM TRA BẢN QUYỀN ĐÃ ĐƯỢC CHUẨN HÓA LOGIC ---
   function checkTrialPeriod() {
-    // return true; // <-- BỎ DẤU CHÉO (//) Ở ĐẦU DÒNG NÀY NẾU THẦY MUỐN TẮT TÍNH NĂNG GIỚI HẠN THỜI GIAN
+     // return true; // <-- BỎ DẤU CHÉO (//) Ở ĐẦU DÒNG NÀY NẾU MUỐN TẮT TÍNH NĂNG GIỚI HẠN THỜI GIAN
 
     const trialStartDate = new Date(2026, 1, 7); // Ngày 07/02/2026
     const trialDays = 14;
@@ -266,12 +268,11 @@
     // KIỂM TRA: NẾU ĐÃ QUÁ HẠN DÙNG THỬ
     if (today > trialExpiryDate) {
       trialTitle.innerText = "Hết hạn dùng thử";
-      trialTitle.style.color = "#dc3545";
+      trialTitle.style.color = "#dc2626";
       trialMessage.innerHTML = "Thời gian dùng thử 14 ngày của bạn đã kết thúc.<br>Vui lòng liên hệ Admin để gia hạn phần mềm.";
       
       btnTrialOk.innerText = 'Thoát hệ thống';
-      btnTrialOk.classList.remove('btn-primary');
-      btnTrialOk.classList.add('btn-danger');
+      btnTrialOk.className = 'btn btn-danger fw-bold';
       btnTrialOk.removeAttribute('data-bs-dismiss'); 
       
       btnTrialOk.onclick = function() {
@@ -281,17 +282,28 @@
       const trialModal = new bootstrap.Modal(trialModalElement, { backdrop: 'static', keyboard: false });
       trialModal.show();
       
-      // Ẩn toàn bộ giao diện phía sau
-      if(document.getElementById('login-overlay')) document.getElementById('login-overlay').style.display = 'none';
-      if(document.getElementById('pageLoading')) document.getElementById('pageLoading').style.display = 'none';
+      // Ẩn hệ thống phía sau
       if(document.getElementById('mainApp')) document.getElementById('mainApp').style.display = 'none';
       
       return false;
     }
 
-    // NẾU CÒN HẠN DÙNG THỬ
-    const trialModal = new bootstrap.Modal(trialModalElement, { backdrop: 'static', keyboard: false });
-    trialModal.show();
+    // NẾU CÒN HẠN DÙNG THỬ (Chỉ hiện 1 lần mỗi phiên đăng nhập)
+    if (!sessionStorage.getItem("CD_TRIAL_SHOWN")) {
+      trialTitle.innerText = "Thông báo dùng thử";
+      trialTitle.style.color = "#1e3a8a";
+      trialMessage.innerHTML = "Bạn đang trong thời gian dùng thử 14 ngày.<br>Ngày bắt đầu: 07/02/2026.";
+      
+      btnTrialOk.innerText = 'Đồng ý';
+      btnTrialOk.className = 'btn btn-primary fw-bold';
+      btnTrialOk.setAttribute('data-bs-dismiss', 'modal');
+      btnTrialOk.onclick = function() {
+         sessionStorage.setItem("CD_TRIAL_SHOWN", "true");
+      };
+
+      const trialModal = new bootstrap.Modal(trialModalElement, { backdrop: 'static', keyboard: false });
+      trialModal.show();
+    }
     return true;
   }
 
@@ -310,6 +322,7 @@
   
   function logoutGoogle() { 
       sessionStorage.removeItem("CD_USER_EMAIL"); 
+      sessionStorage.removeItem("CD_TRIAL_SHOWN"); // Xóa cache thông báo
       location.reload(); 
   }
   
@@ -633,8 +646,6 @@
 
   function startAppMain() {
     try {
-        if (!checkTrialPeriod()) return; 
-        
         initSearchTable(); const sInputs = ['s_hoten', 's_thang', 's_nam'];
         sInputs.forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener("keyup", function(e) { if(e.key === 'Enter') doSearch(); }); });
         const storedEmail = sessionStorage.getItem("CD_USER_EMAIL");
@@ -657,6 +668,10 @@
             initSearchTable(); 
             
             document.getElementById('mainApp').style.opacity = '1';
+
+            // ==> BỔ SUNG GỌI THÔNG BÁO DÙNG THỬ SAU KHI ĐÃ TẢI XONG GIAO DIỆN
+            checkTrialPeriod();
+
             if (ctx.canEdit) { window.google.script.run.withSuccessHandler(ok => { if(!ok) console.log("Drive Access Needed"); }).CD_hasDrivePermission(); }
           }).withFailureHandler(err => { 
               document.getElementById('pageLoading').style.display = 'none'; showNotify("Lỗi hệ thống: " + err.message, "error"); 
