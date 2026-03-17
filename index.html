@@ -5,6 +5,8 @@
   <title>Quản lý Lương & Thâm niên - Trường TH&THCS Hợp Thành</title>
   <base target="_top" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuvwPLKjGmcxqtwsur2h9GLJMsG0vayOcnTxgeiaZT0shYWhaj6dO__WGmGKV93HE3/exec";
@@ -113,20 +115,19 @@
 
 <div id="minhchung-container"></div>
 
-<div id="hetHanOverlay" class="overlay-screen" style="display:none; background: #f3f4f6; z-index: 999999;">
-   <div class="no-perm-box">
-      <div class="np-header" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">
-          <span class="np-icon" style="animation: none;">⏳</span>
-          <h2 class="np-title">HẾT HẠN SỬ DỤNG</h2>
+<div class="modal fade" id="trialModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" style="z-index: 9999999;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-4 border-0 shadow-lg" style="background: rgba(255, 255, 255, 0.95);">
+      <div class="mb-4 mt-2">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" width="120">
       </div>
-      <div class="np-body">
-         <p class="np-msg">Hệ thống đã vượt quá thời gian sử dụng <b>14 ngày</b>.<br><br>Vui lòng liên hệ nhà phát triển để được hỗ trợ gia hạn.</p>
-         <div style="font-size: 15px; font-weight: bold; color: #1e3a8a; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;">
-             Phát triển: HOÀNG NGỌC LÂM<br>
-             Trường TH&THCS Hợp Thành
-         </div>
-      </div>
-   </div>
+      <h5 class="fw-bold mb-3" style="font-family: 'Segoe UI', sans-serif;" id="trialTitle">Thông báo dùng thử</h5>
+      <p class="fs-5 text-secondary" style="font-family: 'Segoe UI', sans-serif;" id="trialMessage">
+        Bạn đang trong thời gian dùng thử 14 ngày. Ngày bắt đầu: 07/02/2026.
+      </p>
+      <button type="button" id="btnTrialOk" class="btn btn-primary px-5 mt-3 fw-bold" data-bs-dismiss="modal">Đồng ý</button>
+    </div>
+  </div>
 </div>
 
 <div id="login-overlay" style="display: none;">
@@ -216,6 +217,8 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
   window.CD_CAN_EDIT = false; 
 
@@ -243,28 +246,53 @@
       });
   });
 
-  /* ================= KIỂM TRA GIỚI HẠN THỜI GIAN SỬ DỤNG 14 NGÀY ================= */
-  const NGAY_BAT_DAU = new Date("2026-03-01"); 
-  const SO_NGAY_GIOI_HAN = 14;
-// return false; // <-- BỎ DẤU CHÉO (//) Ở ĐẦU DÒNG NÀY ĐỂ TẮT TÍNH NĂNG GIỚI HẠN THỜI GIAN
-  function kiemTraHetHan() {
-      const homNay = new Date();
-      const thoiGianDaQua = homNay.getTime() - NGAY_BAT_DAU.getTime();
-      const soNgayDaQua = Math.floor(thoiGianDaQua / (1000 * 3600 * 24));
+  // --- BỔ SUNG: LOGIC KIỂM TRA BẢN QUYỀN (TRIAL PERIOD) ---
+  function checkTrialPeriod() {
+    // return true; // <-- BỎ DẤU CHÉO (//) Ở ĐẦU DÒNG NÀY NẾU THẦY MUỐN TẮT TÍNH NĂNG GIỚI HẠN THỜI GIAN
+
+    const trialStartDate = new Date(2026, 1, 7); // Ngày 07/02/2026
+    const trialDays = 14;
+    const trialExpiryDate = new Date(trialStartDate);
+    trialExpiryDate.setDate(trialStartDate.getDate() + trialDays);
+    const today = new Date();
+
+    const trialModalElement = document.getElementById('trialModal');
+    const btnTrialOk = document.getElementById('btnTrialOk');
+    const trialMessage = document.getElementById('trialMessage');
+    const trialTitle = document.getElementById('trialTitle');
+
+    if (!trialModalElement || !btnTrialOk) return true;
+
+    // KIỂM TRA: NẾU ĐÃ QUÁ HẠN DÙNG THỬ
+    if (today > trialExpiryDate) {
+      trialTitle.innerText = "Hết hạn dùng thử";
+      trialTitle.style.color = "#dc3545";
+      trialMessage.innerHTML = "Thời gian dùng thử 14 ngày của bạn đã kết thúc.<br>Vui lòng liên hệ Admin để gia hạn phần mềm.";
       
-      if (soNgayDaQua >= SO_NGAY_GIOI_HAN) {
-          document.getElementById('hetHanOverlay').style.display = 'flex';
-          
-          const loginOverlay = document.getElementById('login-overlay');
-          if (loginOverlay) loginOverlay.style.display = 'none';
-          
-          const mainApp = document.getElementById('mainApp');
-          if (mainApp) mainApp.style.display = 'none';
-          
-          document.getElementById('pageLoading').style.display = 'none';
-          return true;
-      }
-      return false; 
+      btnTrialOk.innerText = 'Thoát hệ thống';
+      btnTrialOk.classList.remove('btn-primary');
+      btnTrialOk.classList.add('btn-danger');
+      btnTrialOk.removeAttribute('data-bs-dismiss'); 
+      
+      btnTrialOk.onclick = function() {
+        window.location.href = "https://www.google.com";
+      };
+      
+      const trialModal = new bootstrap.Modal(trialModalElement, { backdrop: 'static', keyboard: false });
+      trialModal.show();
+      
+      // Ẩn toàn bộ giao diện phía sau
+      if(document.getElementById('login-overlay')) document.getElementById('login-overlay').style.display = 'none';
+      if(document.getElementById('pageLoading')) document.getElementById('pageLoading').style.display = 'none';
+      if(document.getElementById('mainApp')) document.getElementById('mainApp').style.display = 'none';
+      
+      return false;
+    }
+
+    // NẾU CÒN HẠN DÙNG THỬ
+    const trialModal = new bootstrap.Modal(trialModalElement, { backdrop: 'static', keyboard: false });
+    trialModal.show();
+    return true;
   }
 
   /* --- CÁC HÀM XỬ LÝ CHÍNH KHÁC --- */
@@ -340,7 +368,6 @@
     thead.innerHTML = hHtml; tbody.innerHTML = ''; addRow();
   }
 
-  // [ĐÃ CẬP NHẬT THEO YÊU CẦU] Ẩn ô text input ở cột Số quyết định, chỉ để nút tải lên và danh sách QĐ
   function addRow() {
     const type = document.getElementById('u_comboLoai').value; const cols = CONFIG[type]; const tbody = document.getElementById('u_tbody');
     const tr = document.createElement('tr'); tr.className = 'data-row'; let html = '<td class="stt-cell"></td>';
@@ -606,7 +633,7 @@
 
   function startAppMain() {
     try {
-        if (kiemTraHetHan()) return; 
+        if (!checkTrialPeriod()) return; 
         
         initSearchTable(); const sInputs = ['s_hoten', 's_thang', 's_nam'];
         sInputs.forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener("keyup", function(e) { if(e.key === 'Enter') doSearch(); }); });
