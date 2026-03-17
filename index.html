@@ -122,8 +122,8 @@
       <div class="np-body">
          <p class="np-msg">Hệ thống đã vượt quá thời gian sử dụng <b>14 ngày</b>.<br><br>Vui lòng liên hệ nhà phát triển để được hỗ trợ gia hạn.</p>
          <div style="font-size: 15px; font-weight: bold; color: #1e3a8a; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;">
-             Tác giả: HOÀNG NGỌC LÂM<br>
-             Đơn vị: Trường TH Hợp Thành
+             Phát triển: HOÀNG NGỌC LÂM<br>
+             Trường TH&THCS Hợp Thành
          </div>
       </div>
    </div>
@@ -246,7 +246,7 @@
   /* ================= KIỂM TRA GIỚI HẠN THỜI GIAN SỬ DỤNG 14 NGÀY ================= */
   const NGAY_BAT_DAU = new Date("2026-03-16"); 
   const SO_NGAY_GIOI_HAN = 14;
-
+// return false; // <-- BỎ DẤU CHÉO (//) Ở ĐẦU DÒNG NÀY ĐỂ TẮT TÍNH NĂNG GIỚI HẠN THỜI GIAN
   function kiemTraHetHan() {
       const homNay = new Date();
       const thoiGianDaQua = homNay.getTime() - NGAY_BAT_DAU.getTime();
