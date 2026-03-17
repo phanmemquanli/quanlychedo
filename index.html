@@ -253,7 +253,7 @@
   });
 
   function checkTrialPeriod() {
-      return true; // <-- BỎ DẤU CHÉO (//) Ở ĐẦU DÒNG NÀY NẾU MUỐN TẮT TÍNH NĂNG GIỚI HẠN THỜI GIAN
+      // return true; // <-- BỎ DẤU CHÉO (//) Ở ĐẦU DÒNG NÀY NẾU MUỐN TẮT TÍNH NĂNG GIỚI HẠN THỜI GIAN
 
     const trialStartDate = new Date(2026, 1, 7); // Ngày 07/02/2026
     const trialDays = 14;
@@ -449,8 +449,9 @@
         let qdText = "";
         
         if (typeof qdObj === 'object' && qdObj !== null) {
-            qdText = qdObj.text || "";
-            let linkStr = qdObj.link || "";
+            qdText = String(qdObj.text || "").trim();
+            // LỌC SẠCH DẤU CÁCH ĐỂ KHÔNG BỊ HIỆN LINK ẢO
+            let linkStr = String(qdObj.link || "").trim(); 
             if (linkStr && linkStr.includes(',')) {
                 let links = linkStr.split(',');
                 linkDisplay = `<div style="display:flex; flex-wrap:wrap; gap:3px; justify-content:center;">` + 
@@ -459,7 +460,8 @@
                 linkDisplay = `<a href="${linkStr}" target="_blank" style="text-decoration:none; background:#e0f2fe; border:1px solid #bae6fd; padding:2px 5px; border-radius:3px; font-size:12px; font-weight:bold; color:#0369a1;" title="${qdText}">QĐ 1</a>`;
             } else { linkDisplay = qdText; }
         } else { 
-            let str = String(qdObj || "");
+            // LỌC SẠCH DẤU CÁCH ĐỂ KHÔNG BỊ HIỆN LINK ẢO
+            let str = String(qdObj || "").trim(); 
             if(str.includes('http')) {
                  let links = str.split(',').filter(l => l.includes('http'));
                  linkDisplay = `<div style="display:flex; flex-wrap:wrap; gap:3px; justify-content:center;">` + 
@@ -508,27 +510,27 @@
       inputs.forEach(inp => {
           const k = inp.getAttribute('data-key');
           if (loai === 'LUONG') {
-              if(k==='hoten') inp.value = r[1] || ""; 
-              if(k==='mangach') inp.value = r[2] || ""; 
-              if(k==='bachh') inp.value = r[3] || "";
-              if(k==='hshh') inp.value = r[4] || ""; 
+              if(k==='hoten') inp.value = String(r[1] || "").trim(); 
+              if(k==='mangach') inp.value = String(r[2] || "").trim(); 
+              if(k==='bachh') inp.value = String(r[3] || "").trim();
+              if(k==='hshh') inp.value = String(r[4] || "").trim(); 
               if(k==='ngayhh') inp.value = formatD(r[5],r[6],r[7]);
-              if(k==='bacn') inp.value = r[9] || ""; 
-              if(k==='hsn') inp.value = r[10] || ""; 
+              if(k==='bacn') inp.value = String(r[9] || "").trim(); 
+              if(k==='hsn') inp.value = String(r[10] || "").trim(); 
               if(k==='ngayn') inp.value = formatD(r[11],r[12],r[13]);
-              if(k==='soqd') inp.value = (r[14] && r[14].text) ? r[14].text : ""; 
-              if(k==='soqdLink') inp.value = (r[14] && r[14].link) ? r[14].link : ""; 
-              if(k==='soqdText') inp.value = (r[14] && r[14].text) ? r[14].text : "";
+              if(k==='soqd') inp.value = (r[14] && r[14].text) ? String(r[14].text).trim() : ""; 
+              if(k==='soqdLink') inp.value = (r[14] && r[14].link) ? String(r[14].link).trim() : ""; 
+              if(k==='soqdText') inp.value = (r[14] && r[14].text) ? String(r[14].text).trim() : "";
               if(k==='ngayct') inp.value = r[15] ? formatvnDate(r[15]) : "";
           } else {
-              if(k==='hoten') inp.value = r[1] || ""; 
-              if(k==='tlhh') inp.value = r[2] || ""; 
+              if(k==='hoten') inp.value = String(r[1] || "").trim(); 
+              if(k==='tlhh') inp.value = String(r[2] || "").trim(); 
               if(k==='ngayhh') inp.value = formatD(r[3],r[4],r[5]);
-              if(k==='tln') inp.value = r[7] || ""; 
+              if(k==='tln') inp.value = String(r[7] || "").trim(); 
               if(k==='ngayn') inp.value = formatD(r[8],r[9],r[10]);
-              if(k==='soqd') inp.value = (r[11] && r[11].text) ? r[11].text : ""; 
-              if(k==='soqdLink') inp.value = (r[11] && r[11].link) ? r[11].link : ""; 
-              if(k==='soqdText') inp.value = (r[11] && r[11].text) ? r[11].text : "";
+              if(k==='soqd') inp.value = (r[11] && r[11].text) ? String(r[11].text).trim() : ""; 
+              if(k==='soqdLink') inp.value = (r[11] && r[11].link) ? String(r[11].link).trim() : ""; 
+              if(k==='soqdText') inp.value = (r[11] && r[11].text) ? String(r[11].text).trim() : "";
           }
           if (k==='soqdLink' && inp.value) {
                const cell = inp.closest('td');
@@ -543,35 +545,36 @@
       showNotify("Dữ liệu đã được chuyển sang. Sửa xong hãy bấm [Lưu tất cả]", "success");
   }
 
-  function formatPercent(v) {
-    if (v === "" || v === null || v === undefined) return "";
-    let n = parseFloat(v); if (isNaN(n)) return v; if (Math.abs(n) <= 1 && n !== 0) n = n * 100; return Number(n.toFixed(2)) + "%";
-  }
-  function formatD(d,m,y) { if(!d && !m && !y) return ""; return `${d}/${m}/${y}`; }
-  function formatvnDate(dateStr) {
-    if (!dateStr) return ""; if (typeof dateStr === 'string') return dateStr; 
-    try { const d = new Date(dateStr); return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`; } catch(e) { return dateStr; }
-  }
-
   function saveAll() {
     const rows = document.querySelectorAll('.data-row'); const type = document.getElementById('u_comboLoai').value;
     const status = document.getElementById('updateStatus'); const dataList = []; let errorFound = false;
+    const editRowIndex = document.getElementById('EDIT_ROW_INDEX').value;
+
     for (let i = 0; i < rows.length; i++) {
         const tr = rows[i]; const inputs = tr.querySelectorAll('input'); const rowData = { loai: type }; let hasData = false; let hotenInput = null;
         inputs.forEach(inp => {
             const k = inp.getAttribute('data-key');
-            if (k) { rowData[k] = inp.value.trim(); if (rowData[k] !== "" && k !== 'soqdLink' && k !== 'soqdText') hasData = true; if (k === 'hoten') hotenInput = inp; }
+            if (k) { 
+                rowData[k] = inp.value.trim(); 
+                
+                // [CẬP NHẬT KỸ THUẬT]: Khi sửa, nếu ô bị xóa rỗng, ta gán 1 khoảng trắng " " để ép Google Sheet GHI ĐÈ xóa dữ liệu cũ
+                if (editRowIndex && rowData[k] === "") {
+                    rowData[k] = " ";
+                }
+                
+                if (rowData[k].trim() !== "" && k !== 'soqdLink' && k !== 'soqdText') hasData = true; 
+                if (k === 'hoten') hotenInput = inp; 
+            }
         });
-        if (hasData && (!rowData.hoten)) {
+        if (hasData && (!rowData.hoten || rowData.hoten.trim() === "")) {
             showNotify("⚠️ Dòng thứ " + (i + 1) + ": Vui lòng nhập <b>HỌ VÀ TÊN</b> trước khi lưu!", "warning");
             if (hotenInput) { hotenInput.focus(); hotenInput.style.backgroundColor = "#fee2e2"; } errorFound = true; break;
         }
-        if (hasData && rowData.hoten) dataList.push(rowData);
+        if (hasData && rowData.hoten && rowData.hoten.trim() !== "") dataList.push(rowData);
     }
     if (errorFound) return;
     if (dataList.length === 0) { showNotify("Chưa nhập dữ liệu nào hợp lệ.", "warning"); return; }
     
-    const editRowIndex = document.getElementById('EDIT_ROW_INDEX').value;
     status.className = 'status-msg text-loading'; status.innerText = `⏳ Đang lưu...`;
 
     if (editRowIndex) {
@@ -592,6 +595,16 @@
             status.className = 'status-msg text-error'; status.innerText = "❌ " + e.message; showNotify("❌ Lỗi: " + e.message, "error");
          }).CD_doBatchUpdate(dataList);
     }
+  }
+
+  function formatPercent(v) {
+    if (v === "" || v === null || v === undefined) return "";
+    let n = parseFloat(v); if (isNaN(n)) return v; if (Math.abs(n) <= 1 && n !== 0) n = n * 100; return Number(n.toFixed(2)) + "%";
+  }
+  function formatD(d,m,y) { if(!d && !m && !y) return ""; return `${d}/${m}/${y}`; }
+  function formatvnDate(dateStr) {
+    if (!dateStr) return ""; if (typeof dateStr === 'string') return dateStr; 
+    try { const d = new Date(dateStr); return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`; } catch(e) { return dateStr; }
   }
 
   function renderDynamicLinks(rowCell) {
